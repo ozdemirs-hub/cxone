@@ -1,60 +1,111 @@
 (function () {
 
+    var utilitiesPostcodes = null;
+
     function checkPostcode() {
 
-        var postcode = document.getElementById('4');
-        var product = document.getElementById('product_type');
+        var postcodeField = document.getElementById('4');
+        var productType = document.getElementById('product_type');
 
-        if (!postcode || !product) {
+        if (!postcodeField || !productType) {
             return;
         }
 
-        var postcodeValue = postcode.value.trim();
+        var postcode = postcodeField.value.trim();
 
-        var utilities = null;
+        var utilitiesOption = null;
 
-        for (var i = 0; i < product.options.length; i++) {
+        for (var i = 0; i < productType.options.length; i++) {
 
-            if (product.options[i].value === 'Utilities') {
-                utilities = product.options[i];
+            if (productType.options[i].value === 'Utilities') {
+                utilitiesOption = productType.options[i];
                 break;
             }
 
         }
 
-        if (!utilities) {
+        if (!utilitiesOption) {
             return;
         }
 
-        if (postcodeValue === '1234' || postcodeValue === '4321') {
+        /*
+         * Until the postcode file has loaded,
+         * Utilities remains disabled.
+         */
+        if (!utilitiesPostcodes) {
+            utilitiesOption.disabled = true;
 
-            utilities.disabled = true;
-
-            if (product.value === 'Utilities') {
-                product.value = '';
+            if (productType.value === 'Utilities') {
+                productType.value = '';
             }
+
+            return;
+        }
+
+        var utilitiesAllowed = false;
+
+        for (var i = 0; i < utilitiesPostcodes.length; i++) {
+
+            if (utilitiesPostcodes[i] === postcode) {
+                utilitiesAllowed = true;
+                break;
+            }
+
+        }
+
+        if (utilitiesAllowed) {
+
+            utilitiesOption.disabled = false;
 
         } else {
 
-            utilities.disabled = false;
+            utilitiesOption.disabled = true;
+
+            if (productType.value === 'Utilities') {
+                productType.value = '';
+            }
 
         }
 
     }
 
 
+    function loadPostcodes() {
+
+        fetch('https://YOUR-USERNAME.github.io/YOUR-REPOSITORY/utilities-postcodes.json')
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+
+                utilitiesPostcodes = data;
+
+                checkPostcode();
+
+            })
+            .catch(function () {
+
+                utilitiesPostcodes = [];
+
+                checkPostcode();
+
+            });
+
+    }
+
+
     function initialise() {
 
-        var postcode = document.getElementById('4');
+        var postcodeField = document.getElementById('4');
 
-        if (!postcode) {
+        if (!postcodeField) {
             return;
         }
 
-        postcode.addEventListener('input', checkPostcode);
-        postcode.addEventListener('change', checkPostcode);
+        postcodeField.addEventListener('input', checkPostcode);
+        postcodeField.addEventListener('change', checkPostcode);
 
-        checkPostcode();
+        loadPostcodes();
 
     }
 
