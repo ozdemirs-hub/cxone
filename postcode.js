@@ -1,8 +1,4 @@
-(function () {
+function testButton() {
     
-        var postcode = document.getElementById('4');
-        if (postcode) {
-            postcode.value = 'script loaded';
-        }
-
-})();
+        var postcode = document.getElementById('4').value='SCRIPT WORKING';
+}
