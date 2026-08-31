@@ -120,7 +120,7 @@
 
     function loadPostcodes() {
 
-        fetch('https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json')
+        fetch('https://asset.compareclub.com.au/energy/utilities-postcodes.json')
 
             .then(function (response) {
 
