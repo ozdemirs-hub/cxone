@@ -2,16 +2,21 @@
 
     var utilitiesPostcodes = null;
 
-    function checkPostcode() {
+
+    function checkUtilities() {
 
         var postcodeField = document.getElementById('4');
+        var stateField = document.getElementById('3');
         var productType = document.getElementById('product_type');
 
-        if (!postcodeField || !productType) {
+        if (!postcodeField || !stateField || !productType) {
             return;
         }
 
+
         var postcode = postcodeField.value.trim();
+        var state = stateField.value.trim().toUpperCase();
+
 
         var utilitiesOption = null;
 
@@ -24,15 +29,19 @@
 
         }
 
+
         if (!utilitiesOption) {
             return;
         }
 
+
         /*
-         * Until the postcode file has loaded,
-         * Utilities remains disabled.
+         * RULE 1:
+         * NSW and VIC can never select Utilities.
          */
-        if (!utilitiesPostcodes) {
+
+        if (state === 'NSW' || state === 'VIC') {
+
             utilitiesOption.disabled = true;
 
             if (productType.value === 'Utilities') {
@@ -41,6 +50,31 @@
 
             return;
         }
+
+
+        /*
+         * RULE 2:
+         * If postcode list has not loaded yet,
+         * keep Utilities disabled.
+         */
+
+        if (!utilitiesPostcodes) {
+
+            utilitiesOption.disabled = true;
+
+            if (productType.value === 'Utilities') {
+                productType.value = '';
+            }
+
+            return;
+        }
+
+
+        /*
+         * RULE 3:
+         * For all other states, Utilities is enabled
+         * only when the postcode exists in the list.
+         */
 
         var utilitiesAllowed = false;
 
@@ -52,6 +86,7 @@
             }
 
         }
+
 
         if (utilitiesAllowed) {
 
@@ -72,7 +107,7 @@
 
     function loadPostcodes() {
 
-        fetch('https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json')
+        fetch('https://YOUR-USERNAME.github.io/YOUR-REPOSITORY/utilities-postcodes.json')
             .then(function (response) {
                 return response.json();
             })
@@ -80,14 +115,14 @@
 
                 utilitiesPostcodes = data;
 
-                checkPostcode();
+                checkUtilities();
 
             })
             .catch(function () {
 
                 utilitiesPostcodes = [];
 
-                checkPostcode();
+                checkUtilities();
 
             });
 
@@ -97,13 +132,32 @@
     function initialise() {
 
         var postcodeField = document.getElementById('4');
+        var stateField = document.getElementById('3');
 
-        if (!postcodeField) {
+        if (!postcodeField || !stateField) {
             return;
         }
 
-        postcodeField.addEventListener('input', checkPostcode);
-        postcodeField.addEventListener('change', checkPostcode);
+
+        /*
+         * Check whenever postcode changes.
+         */
+
+        postcodeField.addEventListener('input', checkUtilities);
+        postcodeField.addEventListener('change', checkUtilities);
+
+
+        /*
+         * Check whenever state changes.
+         */
+
+        stateField.addEventListener('input', checkUtilities);
+        stateField.addEventListener('change', checkUtilities);
+
+
+        /*
+         * Load postcode list from GitHub.
+         */
 
         loadPostcodes();
 
