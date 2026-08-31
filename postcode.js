@@ -72,7 +72,7 @@
 
     function loadPostcodes() {
 
-        fetch('https://YOUR-USERNAME.github.io/YOUR-REPOSITORY/utilities-postcodes.json')
+        fetch('https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json')
             .then(function (response) {
                 return response.json();
             })
