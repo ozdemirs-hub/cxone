@@ -1,7 +1,6 @@
 (function () {
 
     var utilitiesPostcodes = null;
-    var utilitiesOption = null;
 
 
     function checkUtilities() {
@@ -19,21 +18,13 @@
         var state = stateField.value.trim().toUpperCase();
 
 
-        /*
-         * Find Utilities option the first time.
-         */
+        var utilitiesOption = null;
 
-        if (!utilitiesOption) {
+        for (var i = 0; i < productType.options.length; i++) {
 
-            for (var i = 0; i < productType.options.length; i++) {
-
-                if (productType.options[i].value === 'Utilities') {
-
-                    utilitiesOption = productType.options[i];
-                    break;
-
-                }
-
+            if (productType.options[i].value === 'Utilities') {
+                utilitiesOption = productType.options[i];
+                break;
             }
 
         }
@@ -45,72 +36,68 @@
 
 
         /*
-         * Determine whether Utilities is allowed.
+         * RULE 1:
+         * NSW and VIC can never select Utilities.
+         */
+
+        if (state === 'NT' || state === 'TAS' || state === 'WA') {
+
+            utilitiesOption.disabled = true;
+
+            if (productType.value === 'Utilities') {
+                productType.value = '';
+            }
+
+            return;
+        }
+
+
+        /*
+         * RULE 2:
+         * If postcode list has not loaded yet,
+         * keep Utilities disabled.
+         */
+
+        if (!utilitiesPostcodes) {
+
+            utilitiesOption.disabled = true;
+
+            if (productType.value === 'Utilities') {
+                productType.value = '';
+            }
+
+            return;
+        }
+
+
+        /*
+         * RULE 3:
+         * For all other states, Utilities is enabled
+         * only when the postcode exists in the list.
          */
 
         var utilitiesAllowed = false;
 
+        for (var i = 0; i < utilitiesPostcodes.length; i++) {
 
-        /*
-         * NSW and VIC:
-         * Utilities is never allowed.
-         */
-
-        if (state === 'NSW' || state === 'VIC') {
-
-            utilitiesAllowed = false;
-
-        }
-
-
-        /*
-         * Other states:
-         * Utilities is allowed only if postcode
-         * exists in the postcode list.
-         */
-
-        else if (utilitiesPostcodes) {
-
-            for (var i = 0; i < utilitiesPostcodes.length; i++) {
-
-                if (utilitiesPostcodes[i] === postcode) {
-
-                    utilitiesAllowed = true;
-                    break;
-
-                }
-
+            if (utilitiesPostcodes[i] === postcode) {
+                utilitiesAllowed = true;
+                break;
             }
 
         }
 
-
-        /*
-         * Show or hide Utilities.
-         */
 
         if (utilitiesAllowed) {
 
-            if (!utilitiesOption.parentNode) {
+            utilitiesOption.disabled = false;
 
-                productType.appendChild(utilitiesOption);
+        } else {
 
-            }
-
-        }
-
-        else {
+            utilitiesOption.disabled = true;
 
             if (productType.value === 'Utilities') {
-
                 productType.value = '';
-
-            }
-
-            if (utilitiesOption.parentNode) {
-
-                utilitiesOption.parentNode.removeChild(utilitiesOption);
-
             }
 
         }
@@ -121,13 +108,9 @@
     function loadPostcodes() {
 
         fetch('https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json')
-
             .then(function (response) {
-
                 return response.json();
-
             })
-
             .then(function (data) {
 
                 utilitiesPostcodes = data;
@@ -135,7 +118,6 @@
                 checkUtilities();
 
             })
-
             .catch(function () {
 
                 utilitiesPostcodes = [];
@@ -157,27 +139,25 @@
         }
 
 
-        postcodeField.addEventListener(
-            'input',
-            checkUtilities
-        );
+        /*
+         * Check whenever postcode changes.
+         */
 
-        postcodeField.addEventListener(
-            'change',
-            checkUtilities
-        );
+        postcodeField.addEventListener('input', checkUtilities);
+        postcodeField.addEventListener('change', checkUtilities);
 
 
-        stateField.addEventListener(
-            'input',
-            checkUtilities
-        );
+        /*
+         * Check whenever state changes.
+         */
 
-        stateField.addEventListener(
-            'change',
-            checkUtilities
-        );
+        stateField.addEventListener('input', checkUtilities);
+        stateField.addEventListener('change', checkUtilities);
 
+
+        /*
+         * Load postcode list from GitHub.
+         */
 
         loadPostcodes();
 
