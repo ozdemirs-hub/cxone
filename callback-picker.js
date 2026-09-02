@@ -77,3 +77,138 @@
     }
 
 })();
+
+
+// ============================================================
+
+// PRODUCT TYPE / CALLBACK DATE TIME VISIBILITY
+
+// ============================================================
+
+
+
+(function () {
+
+
+
+    function initialiseProductType() {
+
+
+
+        var productType = document.getElementById("product_type");
+
+        var callbackGroup = document.getElementById("callback_datetime_group");
+
+        var callbackField = document.getElementById("callback_time");
+
+
+
+        if (!productType || !callbackGroup) {
+
+            return;
+
+        }
+
+
+
+        function updateCallbackVisibility() {
+
+
+
+            if (productType.value === "OVC" ||
+
+                productType.value === "Utilities") {
+
+
+
+                callbackGroup.style.display = "block";
+
+
+
+            } else {
+
+
+
+                callbackGroup.style.display = "none";
+
+
+
+                if (callbackField) {
+
+                    callbackField.value = "";
+
+                }
+
+
+
+            }
+
+        }
+
+
+
+        // Run immediately
+
+        updateCallbackVisibility();
+
+
+
+        // Run whenever Product Type changes
+
+        productType.addEventListener("change", updateCallbackVisibility);
+
+
+
+    }
+
+
+
+
+
+    // Wait until the CXone form is available
+
+    var attempts = 0;
+
+
+
+    var timer = setInterval(function () {
+
+
+
+        attempts++;
+
+
+
+        if (document.getElementById("product_type")) {
+
+
+
+            clearInterval(timer);
+
+
+
+            initialiseProductType();
+
+
+
+        }
+
+
+
+        if (attempts >= 50) {
+
+
+
+            clearInterval(timer);
+
+
+
+        }
+
+
+
+    }, 100);
+
+
+
+})();
