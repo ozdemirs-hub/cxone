@@ -161,7 +161,7 @@
 
     function loadUtilitiesPostcodes() {
 
-        fetch('utilities-postcodes.json')
+        fetch('https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json')
 
             .then(function (response) {
 
