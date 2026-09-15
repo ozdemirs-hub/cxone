@@ -1,7 +1,8 @@
 (function () {
 
     var utilitiesPostcodes = [];
-    var postcodeLoaded = false;
+
+    var JSON_URL = 'https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json';
 
 
     function getFields() {
@@ -9,140 +10,68 @@
         return {
             state: document.getElementById('3'),
             postcode: document.getElementById('4'),
-
-            health: document.getElementById('product_health'),
-            ovc: document.getElementById('product_ovc'),
             utilities: document.getElementById('product_utilities'),
-
-            callbackGroup: document.getElementById('callback_datetime_group'),
-            callback: document.getElementById('callback_datetime')
+            ovc: document.getElementById('product_ovc'),
+            callbackGroup: document.getElementById('callback_datetime_group')
         };
 
     }
 
 
-    function openCallbackPicker() {
+    function postcodeIsApproved(postcode) {
 
-        var fields = getFields();
+        for (var i = 0; i < utilitiesPostcodes.length; i++) {
 
-        if (!fields.callback) {
-            return;
-        }
+            if (String(utilitiesPostcodes[i]).trim() === postcode) {
 
-        if (fields.callbackGroup.style.display === 'none') {
-            return;
-        }
+                return true;
 
-        fields.callback.focus();
-
-        try {
-            fields.callback.showPicker();
-        } catch (e) {
-            fields.callback.click();
-        }
-
-    }
-
-
-    function updateCallbackVisibility(openPicker) {
-
-        var fields = getFields();
-
-        if (!fields.callbackGroup) {
-            return;
-        }
-
-        var showCallback = false;
-
-        if (fields.ovc && fields.ovc.checked) {
-            showCallback = true;
-        }
-
-        if (fields.utilities && fields.utilities.checked) {
-            showCallback = true;
-        }
-
-
-        if (showCallback) {
-
-            fields.callbackGroup.style.display = '';
-
-            if (openPicker) {
-                openCallbackPicker();
-            }
-
-        } else {
-
-            fields.callbackGroup.style.display = 'none';
-
-            if (fields.callback) {
-                fields.callback.value = '';
             }
 
         }
 
+        return false;
+
     }
 
 
-    function updateUtilitiesAvailability() {
+    function updateUtilities() {
 
         var fields = getFields();
 
         if (!fields.state ||
             !fields.postcode ||
             !fields.utilities) {
+
             return;
+
         }
 
 
         var state = fields.state.value.trim().toUpperCase();
-        var postcode = fields.postcode.value.trim();
 
-        var utilitiesAllowed = true;
+        var postcode = fields.postcode.value.trim();
 
 
         /*
-         * Utilities is NOT available in NSW or VIC
+         * NSW and VIC are never allowed.
          */
 
         if (state === 'NSW' || state === 'VIC') {
-            utilitiesAllowed = false;
-        }
 
+            fields.utilities.disabled = true;
+            fields.utilities.checked = false;
 
-        /*
-         * If postcode list has loaded,
-         * postcode must exist in the approved list.
-         */
-
-        if (postcodeLoaded) {
-
-            var postcodeFound = false;
-
-            for (var i = 0; i < utilitiesPostcodes.length; i++) {
-
-                if (String(utilitiesPostcodes[i]).trim() === postcode) {
-
-                    postcodeFound = true;
-                    break;
-
-                }
-
-            }
-
-
-            if (!postcodeFound) {
-                utilitiesAllowed = false;
-            }
+            return;
 
         }
 
 
         /*
-         * Enable or disable Utilities
+         * Check postcode against JSON.
          */
 
-        if (utilitiesAllowed) {
+        if (postcodeIsApproved(postcode)) {
 
             fields.utilities.disabled = false;
 
@@ -153,20 +82,56 @@
 
         }
 
+    }
 
-        updateCallbackVisibility(false);
+
+    function updateCallback() {
+
+        var fields = getFields();
+
+        if (!fields.callbackGroup) {
+            return;
+        }
+
+
+        var showCallback = false;
+
+
+        if (fields.ovc && fields.ovc.checked) {
+            showCallback = true;
+        }
+
+
+        if (fields.utilities && fields.utilities.checked) {
+            showCallback = true;
+        }
+
+
+        if (showCallback) {
+
+            fields.callbackGroup.style.display = '';
+
+        } else {
+
+            fields.callbackGroup.style.display = 'none';
+
+        }
 
     }
 
 
-    function loadUtilitiesPostcodes() {
+    function loadJSON() {
 
-        fetch('https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json')
+        fetch(JSON_URL)
 
             .then(function (response) {
 
                 if (!response.ok) {
-                    throw new Error('Unable to load utilities-postcodes.json');
+
+                    throw new Error(
+                        'HTTP error ' + response.status
+                    );
+
                 }
 
                 return response.json();
@@ -176,18 +141,17 @@
             .then(function (data) {
 
                 utilitiesPostcodes = data;
-                postcodeLoaded = true;
 
-                updateUtilitiesAvailability();
+                updateUtilities();
 
             })
 
             .catch(function (error) {
 
-                postcodeLoaded = true;
-                utilitiesPostcodes = [];
-
-                updateUtilitiesAvailability();
+                console.log(
+                    'ERROR loading Utilities postcode JSON: ' +
+                    error.message
+                );
 
             });
 
@@ -200,112 +164,91 @@
 
 
         /*
-         * Wait until CXone has created the form fields.
+         * Wait for CXone form fields.
          */
 
         if (!fields.state ||
             !fields.postcode ||
-            !fields.health ||
-            !fields.ovc ||
             !fields.utilities ||
-            !fields.callbackGroup ||
-            !fields.callback) {
+            !fields.ovc ||
+            !fields.callbackGroup) {
 
             setTimeout(initialise, 500);
 
             return;
+
         }
 
 
         /*
-         * OVC checkbox
+         * Initially hide Callback.
          */
 
-        fields.ovc.addEventListener('change', function () {
-
-            updateCallbackVisibility(true);
-
-        });
+        updateCallback();
 
 
         /*
-         * Utilities checkbox
-         */
-
-        fields.utilities.addEventListener('change', function () {
-
-            updateCallbackVisibility(true);
-
-        });
-
-
-        /*
-         * Health checkbox
-         */
-
-        fields.health.addEventListener('change', function () {
-
-            updateCallbackVisibility(false);
-
-        });
-
-
-        /*
-         * State changes
+         * State changes.
          */
 
         fields.state.addEventListener('input', function () {
 
-            updateUtilitiesAvailability();
+            updateUtilities();
 
         });
 
 
         fields.state.addEventListener('change', function () {
 
-            updateUtilitiesAvailability();
+            updateUtilities();
 
         });
 
 
         /*
-         * Postcode changes
+         * Postcode changes.
          */
 
         fields.postcode.addEventListener('input', function () {
 
-            updateUtilitiesAvailability();
+            updateUtilities();
 
         });
 
 
         fields.postcode.addEventListener('change', function () {
 
-            updateUtilitiesAvailability();
+            updateUtilities();
 
         });
 
 
         /*
-         * Initial state:
-         * Health selected, callback hidden.
+         * Product changes.
          */
 
-        updateCallbackVisibility(false);
+        fields.ovc.addEventListener('change', function () {
+
+            updateCallback();
+
+        });
+
+
+        fields.utilities.addEventListener('change', function () {
+
+            updateCallback();
+
+        });
 
 
         /*
-         * Load approved Utilities postcodes.
+         * Load postcode list.
          */
 
-        loadUtilitiesPostcodes();
+        loadJSON();
 
     }
 
-
-    /*
-     * CXone may need a short time to create the form.
-     */
 
     setTimeout(initialise, 500);
 
