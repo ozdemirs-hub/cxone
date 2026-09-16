@@ -97,16 +97,9 @@
 
         var showUtilitiesCallback = false;
 
-
-        if (fields.ovc && fields.ovc.checked) {
-            showUtilitiesCallback = true;
-        }
-
-
         if (fields.utilities && fields.utilities.checked) {
             showUtilitiesCallback = true;
         }
-
 
         if (showCallback) {
 
@@ -135,12 +128,6 @@
         if (fields.ovc && fields.ovc.checked) {
             showOVCCallback = true;
         }
-
-
-        if (fields.utilities && fields.utilities.checked) {
-            showOVCCallback = true;
-        }
-
 
         if (showCallback) {
 
