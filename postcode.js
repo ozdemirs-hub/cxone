@@ -192,7 +192,7 @@
             !fields.postcode ||
             !fields.utilities ||
             !fields.ovc ||
-            !fields.callbackGroupUtilities) {
+            !fields.callbackGroup) {
 
             setTimeout(initialise, 500);
 
