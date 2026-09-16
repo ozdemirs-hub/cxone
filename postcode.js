@@ -6,9 +6,21 @@
 
 
 
+    var postcodeLoaded = false;
+
+
+
     var JSON_URL = 'https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json';
 
 
+
+
+
+    // ========================================================
+
+    // Get form fields
+
+    // ========================================================
 
 
 
@@ -30,13 +42,13 @@
 
 
 
-            callbackUtilitiesGroup:
+            utilitiesCallback:
 
                 document.getElementById('callback_datetime_utilities_group'),
 
 
 
-            callbackOvcGroup:
+            ovcCallback:
 
                 document.getElementById('callback_datetime_ovc_group')
 
@@ -47,6 +59,14 @@
     }
 
 
+
+
+
+    // ========================================================
+
+    // Check postcode
+
+    // ========================================================
 
 
 
@@ -84,11 +104,21 @@
 
 
 
+    // ========================================================
+
+    // Utilities availability
+
+    // ========================================================
+
+
+
     function updateUtilities() {
 
 
 
         var fields = getFields();
+
+
 
 
 
@@ -110,21 +140,55 @@
 
 
 
-        var state = fields.state.value.trim().toUpperCase();
+        var state =
+
+            fields.state.value.trim().toUpperCase();
 
 
 
-        var postcode = fields.postcode.value.trim();
+        var postcode =
+
+            fields.postcode.value.trim();
 
 
 
 
 
-        /*
+        // ----------------------------------------------------
 
-         * NSW and VIC are never allowed.
+        // JSON has not loaded yet
 
-         */
+        //
+
+        // Keep Utilities DISABLED.
+
+        // ----------------------------------------------------
+
+
+
+        if (!postcodeLoaded) {
+
+
+
+            fields.utilities.disabled = true;
+
+
+
+            return;
+
+
+
+        }
+
+
+
+
+
+        // ----------------------------------------------------
+
+        // NSW and VIC are never allowed
+
+        // ----------------------------------------------------
 
 
 
@@ -152,11 +216,11 @@
 
 
 
-        /*
+        // ----------------------------------------------------
 
-         * Check postcode against JSON.
+        // Check postcode against JSON
 
-         */
+        // ----------------------------------------------------
 
 
 
@@ -168,7 +232,11 @@
 
 
 
-        } else {
+        }
+
+
+
+        else {
 
 
 
@@ -194,6 +262,14 @@
 
 
 
+    // ========================================================
+
+    // Callback visibility
+
+    // ========================================================
+
+
+
     function updateCallback() {
 
 
@@ -202,43 +278,41 @@
 
 
 
-        if (!fields.callbackUtilitiesGroup ||
-
-            !fields.callbackOvcGroup) {
 
 
+        // ----------------------------------------------------
 
-            return;
+        // OVC callback
 
-
-
-        }
+        // ----------------------------------------------------
 
 
 
-
-
-        /*
-
-         * OVC callback section
-
-         */
+        if (fields.ovcCallback) {
 
 
 
-        if (fields.ovc && fields.ovc.checked) {
+            if (fields.ovc && fields.ovc.checked) {
 
 
 
-            fields.callbackOvcGroup.style.display = '';
+                fields.ovcCallback.style.display = 'block';
 
 
 
-        } else {
+            }
 
 
 
-            fields.callbackOvcGroup.style.display = 'none';
+            else {
+
+
+
+                fields.ovcCallback.style.display = 'none';
+
+
+
+            }
 
 
 
@@ -248,27 +322,39 @@
 
 
 
-        /*
+        // ----------------------------------------------------
 
-         * Utilities callback section
+        // Utilities callback
 
-         */
-
-
-
-        if (fields.utilities && fields.utilities.checked) {
+        // ----------------------------------------------------
 
 
 
-            fields.callbackUtilitiesGroup.style.display = '';
+        if (fields.utilitiesCallback) {
 
 
 
-        } else {
+            if (fields.utilities && fields.utilities.checked) {
 
 
 
-            fields.callbackUtilitiesGroup.style.display = 'none';
+                fields.utilitiesCallback.style.display = 'block';
+
+
+
+            }
+
+
+
+            else {
+
+
+
+                fields.utilitiesCallback.style.display = 'none';
+
+
+
+            }
 
 
 
@@ -279,6 +365,14 @@
     }
 
 
+
+
+
+    // ========================================================
+
+    // Load JSON
+
+    // ========================================================
 
 
 
@@ -326,6 +420,10 @@
 
 
 
+                postcodeLoaded = true;
+
+
+
                 updateUtilities();
 
 
@@ -348,6 +446,28 @@
 
 
 
+                /*
+
+                 * Keep Utilities disabled if JSON
+
+                 * cannot be loaded.
+
+                 */
+
+
+
+                postcodeLoaded = true;
+
+
+
+                utilitiesPostcodes = [];
+
+
+
+                updateUtilities();
+
+
+
             });
 
 
@@ -358,7 +478,15 @@
 
 
 
-    function initialise() {
+    // ========================================================
+
+    // Initialise Utilities
+
+    // ========================================================
+
+
+
+    function initialiseUtilities() {
 
 
 
@@ -368,29 +496,15 @@
 
 
 
-        /*
-
-         * Wait for CXone form fields.
-
-         */
-
-
-
         if (!fields.state ||
 
             !fields.postcode ||
 
-            !fields.utilities ||
-
-            !fields.ovc ||
-
-            !fields.callbackUtilitiesGroup ||
-
-            !fields.callbackOvcGroup) {
+            !fields.utilities) {
 
 
 
-            setTimeout(initialise, 500);
+            setTimeout(initialiseUtilities, 500);
 
 
 
@@ -406,13 +520,15 @@
 
         /*
 
-         * Initially hide BOTH callback sections.
+         * IMPORTANT:
+
+         * Disable Utilities immediately.
 
          */
 
 
 
-        updateCallback();
+        fields.utilities.disabled = true;
 
 
 
@@ -420,7 +536,7 @@
 
         /*
 
-         * State changes.
+         * Monitor State.
 
          */
 
@@ -435,8 +551,6 @@
 
 
         });
-
-
 
 
 
@@ -456,7 +570,7 @@
 
         /*
 
-         * Postcode changes.
+         * Monitor Postcode.
 
          */
 
@@ -474,57 +588,11 @@
 
 
 
-
-
         fields.postcode.addEventListener('change', function () {
 
 
 
             updateUtilities();
-
-
-
-        });
-
-
-
-
-
-        /*
-
-         * OVC checkbox changes.
-
-         */
-
-
-
-        fields.ovc.addEventListener('change', function () {
-
-
-
-            updateCallback();
-
-
-
-        });
-
-
-
-
-
-        /*
-
-         * Utilities checkbox changes.
-
-         */
-
-
-
-        fields.utilities.addEventListener('change', function () {
-
-
-
-            updateCallback();
 
 
 
@@ -552,8 +620,143 @@
 
 
 
-    setTimeout(initialise, 500);
+    // ========================================================
+
+    // Initialise Callback sections
+
+    // ========================================================
+
+
+
+    function initialiseCallbacks() {
+
+
+
+        var fields = getFields();
+
+
+
+
+
+        if (!fields.ovc ||
+
+            !fields.utilities ||
+
+            !fields.ovcCallback ||
+
+            !fields.utilitiesCallback) {
+
+
+
+            setTimeout(initialiseCallbacks, 500);
+
+
+
+            return;
+
+
+
+        }
+
+
+
+
+
+        /*
+
+         * Initially hide BOTH callback sections.
+
+         */
+
+
+
+        fields.ovcCallback.style.display = 'none';
+
+
+
+        fields.utilitiesCallback.style.display = 'none';
+
+
+
+
+
+        /*
+
+         * OVC checkbox.
+
+         */
+
+
+
+        fields.ovc.addEventListener('change', function () {
+
+
+
+            updateCallback();
+
+
+
+        });
+
+
+
+
+
+        /*
+
+         * Utilities checkbox.
+
+         */
+
+
+
+        fields.utilities.addEventListener('change', function () {
+
+
+
+            updateCallback();
+
+
+
+        });
+
+
+
+
+
+        /*
+
+         * Initial state.
+
+         */
+
+
+
+        updateCallback();
+
+
+
+    }
+
+
+
+
+
+    // ========================================================
+
+    // Start both processes independently
+
+    // ========================================================
+
+
+
+    setTimeout(initialiseUtilities, 500);
+
+
+
+    setTimeout(initialiseCallbacks, 500);
 
 
 
 })();
+
