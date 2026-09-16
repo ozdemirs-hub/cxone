@@ -86,18 +86,25 @@
     }
 
 
-    function updateUtilitiesCallback() {
+    function updateCallbackUtilities() {
 
         var fields = getFields();
 
-        if (!fields.callbackGroupUtilities) {
+        if (!fields.callbackGroup) {
             return;
         }
 
-        var showCallback = false;
+
+        var showUtilitiesCallback = false;
+
+
+        if (fields.ovc && fields.ovc.checked) {
+            showUtilitiesCallback = true;
+        }
+
 
         if (fields.utilities && fields.utilities.checked) {
-            showCallback = true;
+            showUtilitiesCallback = true;
         }
 
 
@@ -113,7 +120,7 @@
 
     }
 	
-	function updateOVCCallback() {
+	function updateCallbackOVC() {
 
         var fields = getFields();
 
@@ -121,10 +128,17 @@
             return;
         }
 
-        var showCallback = false;
+
+        var showOVCCallback = false;
+
 
         if (fields.ovc && fields.ovc.checked) {
-            showCallback = true;
+            showOVCCallback = true;
+        }
+
+
+        if (fields.utilities && fields.utilities.checked) {
+            showOVCCallback = true;
         }
 
 
@@ -192,7 +206,8 @@
             !fields.postcode ||
             !fields.utilities ||
             !fields.ovc ||
-            !fields.callbackGroup) {
+            !fields.callbackGroupUtilities)
+			!fields.callbackGroupUtilities){
 
             setTimeout(initialise, 500);
 
@@ -205,7 +220,7 @@
          * Initially hide Callback.
          */
 
-        updateCallback();
+        updateCallbackUtilities();
 
 
         /*
@@ -250,14 +265,14 @@
 
         fields.ovc.addEventListener('change', function () {
 
-            updateCallback();
+            updateCallbackOVC();
 
         });
 
 
         fields.utilities.addEventListener('change', function () {
 
-            updateCallback();
+            updateCallbackUtilities();
 
         });
 
