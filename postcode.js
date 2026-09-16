@@ -1,278 +1,357 @@
-(function () {
+var utilitiesPostcodes = [];
 
-    var utilitiesPostcodes = [];
-
-    var JSON_URL = 'https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json';
+var JSON_URL = 'https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json';
 
 
-    function getFields() {
+// ============================================================
+// GET FORM FIELDS
+// ============================================================
 
-        return {
-            state: document.getElementById('3'),
-            postcode: document.getElementById('4'),
-            utilities: document.getElementById('product_utilities'),
-            ovc: document.getElementById('product_ovc'),
-            callbackGroupUtilities: document.getElementById('callback_datetime_utilities_group')
-			callbackGroupOVC: document.getElementById('callback_datetime_ovc_group')
-        };
+function getFields() {
 
-    }
+    return {
+        state: document.getElementById('3'),
+        postcode: document.getElementById('4'),
 
+        utilities: document.getElementById('product_utilities'),
+        ovc: document.getElementById('product_ovc'),
+        health: document.getElementById('product_health'),
 
-    function postcodeIsApproved(postcode) {
+        callbackGroupUtilities:
+            document.getElementById('callback_datetime_utilities_group'),
 
-        for (var i = 0; i < utilitiesPostcodes.length; i++) {
+        callbackUtilities:
+            document.getElementById('callback_datetime_utilities'),
 
-            if (String(utilitiesPostcodes[i]).trim() === postcode) {
+        callbackGroupOVC:
+            document.getElementById('callback_datetime_ovc_group'),
 
-                return true;
+        callbackOVC:
+            document.getElementById('callback_datetime_ovc')
+    };
 
-            }
-
-        }
-
-        return false;
-
-    }
-
-
-    function updateUtilities() {
-
-        var fields = getFields();
-
-        if (!fields.state ||
-            !fields.postcode ||
-            !fields.utilities) {
-
-            return;
-
-        }
+}
 
 
-        var state = fields.state.value.trim().toUpperCase();
+// ============================================================
+// CHECK POSTCODE
+// ============================================================
 
-        var postcode = fields.postcode.value.trim();
+function postcodeIsApproved(postcode) {
 
+    for (var i = 0; i < utilitiesPostcodes.length; i++) {
 
-        /*
-         * NSW and VIC are never allowed.
-         */
+        if (String(utilitiesPostcodes[i]).trim() === postcode) {
 
-        if (state === 'NSW' || state === 'VIC') {
-
-            fields.utilities.disabled = true;
-            fields.utilities.checked = false;
-
-            return;
-
-        }
-
-
-        /*
-         * Check postcode against JSON.
-         */
-
-        if (postcodeIsApproved(postcode)) {
-
-            fields.utilities.disabled = false;
-
-        } else {
-
-            fields.utilities.disabled = true;
-            fields.utilities.checked = false;
+            return true;
 
         }
 
     }
 
+    return false;
 
-    function updateCallbackUtilities() {
-
-        var fields = getFields();
-
-        if (!fields.callbackGroup) {
-            return;
-        }
+}
 
 
-        var showUtilitiesCallback = false;
+// ============================================================
+// UPDATE UTILITIES AVAILABILITY
+// ============================================================
 
-        if (fields.utilities && fields.utilities.checked) {
-            showUtilitiesCallback = true;
-        }
+function updateUtilities() {
 
-        if (showCallback) {
+    var fields = getFields();
 
-            fields.callbackGroupUtilities.style.display = '';
+    if (!fields.state ||
+        !fields.postcode ||
+        !fields.utilities) {
 
-        } else {
-
-            fields.callbackGroupUtilities.style.display = 'none';
-
-        }
-
-    }
-	
-	function updateCallbackOVC() {
-
-        var fields = getFields();
-
-        if (!fields.callbackGroupOVC) {
-            return;
-        }
-
-
-        var showOVCCallback = false;
-
-
-        if (fields.ovc && fields.ovc.checked) {
-            showOVCCallback = true;
-        }
-
-        if (showCallback) {
-
-            fields.callbackGroupOVC.style.display = '';
-
-        } else {
-
-            fields.callbackGroupOVC.style.display = 'none';
-
-        }
+        return;
 
     }
 
 
-    function loadJSON() {
+    var state =
+        String(fields.state.value || '').trim().toUpperCase();
 
-        fetch(JSON_URL)
-
-            .then(function (response) {
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        'HTTP error ' + response.status
-                    );
-
-                }
-
-                return response.json();
-
-            })
-
-            .then(function (data) {
-
-                utilitiesPostcodes = data;
-
-                updateUtilities();
-
-            })
-
-            .catch(function (error) {
-
-                console.log(
-                    'ERROR loading Utilities postcode JSON: ' +
-                    error.message
-                );
-
-            });
-
-    }
+    var postcode =
+        String(fields.postcode.value || '').trim();
 
 
-    function initialise() {
+    // --------------------------------------------------------
+    // NSW and VIC are NEVER allowed
+    // --------------------------------------------------------
 
-        var fields = getFields();
+    if (state === 'NSW' || state === 'VIC') {
 
-
-        /*
-         * Wait for CXone form fields.
-         */
-
-        if (!fields.state ||
-            !fields.postcode ||
-            !fields.utilities ||
-            !fields.ovc ||
-            !fields.callbackGroupUtilities)
-			!fields.callbackGroupUtilities){
-
-            setTimeout(initialise, 500);
-
-            return;
-
-        }
-
-
-        /*
-         * Initially hide Callback.
-         */
+        fields.utilities.disabled = true;
+        fields.utilities.checked = false;
 
         updateCallbackUtilities();
 
-
-        /*
-         * State changes.
-         */
-
-        fields.state.addEventListener('input', function () {
-
-            updateUtilities();
-
-        });
-
-
-        fields.state.addEventListener('change', function () {
-
-            updateUtilities();
-
-        });
-
-
-        /*
-         * Postcode changes.
-         */
-
-        fields.postcode.addEventListener('input', function () {
-
-            updateUtilities();
-
-        });
-
-
-        fields.postcode.addEventListener('change', function () {
-
-            updateUtilities();
-
-        });
-
-
-        /*
-         * Product changes.
-         */
-
-        fields.ovc.addEventListener('change', function () {
-
-            updateCallbackOVC();
-
-        });
-
-
-        fields.utilities.addEventListener('change', function () {
-
-            updateCallbackUtilities();
-
-        });
-
-
-        /*
-         * Load postcode list.
-         */
-
-        loadJSON();
+        return;
 
     }
 
 
-    setTimeout(initialise, 500);
+    // --------------------------------------------------------
+    // Check postcode against JSON list
+    // --------------------------------------------------------
 
-})();
+    if (postcodeIsApproved(postcode)) {
+
+        fields.utilities.disabled = false;
+
+    } else {
+
+        fields.utilities.disabled = true;
+        fields.utilities.checked = false;
+
+    }
+
+
+    // --------------------------------------------------------
+    // Update callback visibility after Utilities changes
+    // --------------------------------------------------------
+
+    updateCallbackUtilities();
+
+}
+
+
+// ============================================================
+// UTILITIES CALLBACK VISIBILITY
+// ============================================================
+
+function updateCallbackUtilities() {
+
+    var fields = getFields();
+
+    if (!fields.callbackGroupUtilities) {
+
+        return;
+
+    }
+
+
+    if (fields.utilities &&
+        fields.utilities.checked &&
+        !fields.utilities.disabled) {
+
+        fields.callbackGroupUtilities.style.display = 'block';
+
+    } else {
+
+        fields.callbackGroupUtilities.style.display = 'none';
+
+        // Clear value when hidden
+        if (fields.callbackUtilities) {
+
+            fields.callbackUtilities.value = '';
+
+        }
+
+    }
+
+}
+
+
+// ============================================================
+// OVC CALLBACK VISIBILITY
+// ============================================================
+
+function updateCallbackOVC() {
+
+    var fields = getFields();
+
+    if (!fields.callbackGroupOVC) {
+
+        return;
+
+    }
+
+
+    if (fields.ovc &&
+        fields.ovc.checked) {
+
+        fields.callbackGroupOVC.style.display = 'block';
+
+    } else {
+
+        fields.callbackGroupOVC.style.display = 'none';
+
+        // Clear value when hidden
+        if (fields.callbackOVC) {
+
+            fields.callbackOVC.value = '';
+
+        }
+
+    }
+
+}
+
+
+// ============================================================
+// LOAD POSTCODE JSON
+// ============================================================
+
+function loadJSON() {
+
+    fetch(JSON_URL)
+
+        .then(function (response) {
+
+            if (!response.ok) {
+
+                throw new Error(
+                    'HTTP error ' + response.status
+                );
+
+            }
+
+            return response.json();
+
+        })
+
+        .then(function (data) {
+
+            utilitiesPostcodes = data;
+
+            updateUtilities();
+
+        })
+
+        .catch(function (error) {
+
+            console.log(
+                'ERROR loading Utilities postcode JSON: ' +
+                error.message
+            );
+
+        });
+
+}
+
+
+// ============================================================
+// INITIALISE
+// ============================================================
+
+function initialise() {
+
+    var fields = getFields();
+
+
+    // --------------------------------------------------------
+    // Wait for CXone form fields
+    // --------------------------------------------------------
+
+    if (!fields.state ||
+        !fields.postcode ||
+        !fields.utilities ||
+        !fields.ovc ||
+        !fields.callbackGroupUtilities ||
+        !fields.callbackGroupOVC) {
+
+        setTimeout(initialise, 500);
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // INITIAL STATE
+    // ========================================================
+
+    // Health is selected by default
+    if (fields.health) {
+
+        fields.health.checked = true;
+
+    }
+
+
+    // Utilities is disabled until postcode is validated
+    fields.utilities.disabled = true;
+    fields.utilities.checked = false;
+
+
+    // Both callback sections hidden initially
+    fields.callbackGroupUtilities.style.display = 'none';
+    fields.callbackGroupOVC.style.display = 'none';
+
+
+    // ========================================================
+    // STATE CHANGE
+    // ========================================================
+
+    fields.state.addEventListener('input', function () {
+
+        updateUtilities();
+
+    });
+
+
+    fields.state.addEventListener('change', function () {
+
+        updateUtilities();
+
+    });
+
+
+    // ========================================================
+    // POSTCODE CHANGE
+    // ========================================================
+
+    fields.postcode.addEventListener('input', function () {
+
+        updateUtilities();
+
+    });
+
+
+    fields.postcode.addEventListener('change', function () {
+
+        updateUtilities();
+
+    });
+
+
+    // ========================================================
+    // OVC CHECKBOX
+    // ========================================================
+
+    fields.ovc.addEventListener('change', function () {
+
+        updateCallbackOVC();
+
+    });
+
+
+    // ========================================================
+    // UTILITIES CHECKBOX
+    // ========================================================
+
+    fields.utilities.addEventListener('change', function () {
+
+        updateCallbackUtilities();
+
+    });
+
+
+    // ========================================================
+    // LOAD POSTCODE LIST
+    // ========================================================
+
+    loadJSON();
+
+}
+
+
+// ============================================================
+// START
+// ============================================================
+
+setTimeout(initialise, 500);
