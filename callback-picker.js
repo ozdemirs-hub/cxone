@@ -1,25 +1,38 @@
 (function () {
 
-    function initialiseCallbackPicker() {
+    // ============================================================
+    // INITIALISE BOTH CALLBACK PICKERS
+    // ============================================================
 
-        var field = document.getElementById("callback_time");
+    function initialiseCallbackPicker(fieldId) {
 
-        if (!field) {
+        var field = document.getElementById(fieldId);
+
+        if (!field || typeof flatpickr === "undefined") {
+
             return;
         }
 
-        // Prevent initialising more than once
+        // Prevent duplicate initialisation
+
         if (field._callbackPickerInitialised) {
+
             return;
         }
 
         field._callbackPickerInitialised = true;
 
+        // Use Flatpickr on the actual input
+
         flatpickr(field, {
 
             enableTime: true,
 
+            // Value stored in the original input
+
             dateFormat: "Y-m-d H:i:S",
+
+            // Human-readable display
 
             altInput: true,
 
@@ -35,127 +48,50 @@
 
             maxTime: "18:00",
 
-            allowInput: false
+
+            allowInput: false,
+
+            // Ensure the original input contains the selected value
+
+            onChange: function (selectedDates, dateStr, instance) {
+
+                instance.input.value = dateStr;
+
+                console.log(
+
+                    fieldId + " selected value:",
+
+                    instance.input.value
+
+                );
+
+            }
 
         });
 
     }
 
 
-    // Flatpickr may already be available
-    if (typeof flatpickr !== "undefined") {
 
-        initialiseCallbackPicker();
 
-    }
 
-    // Otherwise wait briefly for Flatpickr
-    else {
+    // ============================================================
 
-        var attempts = 0;
+    // INITIALISE BOTH FIELDS
 
-        var timer = setInterval(function () {
+    // ============================================================
 
-            attempts++;
 
-            if (typeof flatpickr !== "undefined") {
 
-                clearInterval(timer);
+    function initialiseAllPickers() {
 
-                initialiseCallbackPicker();
 
-            }
 
-            if (attempts >= 50) {
+        initialiseCallbackPicker("callback_datetime_utilities");
 
-                clearInterval(timer);
 
-            }
 
-        }, 100);
-
-    }
-
-})();
-
-
-// ============================================================
-
-// PRODUCT TYPE / CALLBACK DATE TIME VISIBILITY
-
-// ============================================================
-
-
-
-(function () {
-
-
-
-    function initialiseProductType() {
-
-
-
-        var productType = document.getElementById("product_type");
-
-        var callbackGroup = document.getElementById("callback_datetime_group");
-
-        var callbackField = document.getElementById("callback_time");
-
-
-
-        if (!productType || !callbackGroup) {
-
-            return;
-
-        }
-
-
-
-        function updateCallbackVisibility() {
-
-
-
-            if (productType.value === "OVC" ||
-
-                productType.value === "Utilities") {
-
-
-
-                callbackGroup.style.display = "block";
-
-
-
-            } else {
-
-
-
-                callbackGroup.style.display = "none";
-
-
-
-                if (callbackField) {
-
-                    callbackField.value = "";
-
-                }
-
-
-
-            }
-
-        }
-
-
-
-        // Run immediately
-
-        updateCallbackVisibility();
-
-
-
-        // Run whenever Product Type changes
-
-        productType.addEventListener("change", updateCallbackVisibility);
+        initialiseCallbackPicker("callback_datetime_ovc");
 
 
 
@@ -165,7 +101,13 @@
 
 
 
-    // Wait until the CXone form is available
+    // ============================================================
+
+    // WAIT FOR CXONE FORM AND FLATPICKR
+
+    // ============================================================
+
+
 
     var attempts = 0;
 
@@ -179,15 +121,47 @@
 
 
 
-        if (document.getElementById("product_type")) {
+        if (typeof flatpickr !== "undefined") {
 
 
 
-            clearInterval(timer);
+            initialiseAllPickers();
 
 
 
-            initialiseProductType();
+            var utilities = document.getElementById(
+
+                "callback_datetime_utilities"
+
+            );
+
+
+
+            var ovc = document.getElementById(
+
+                "callback_datetime_ovc"
+
+            );
+
+
+
+            // Stop once both fields have been initialised
+
+            if (
+
+                utilities && utilities._callbackPickerInitialised &&
+
+                ovc && ovc._callbackPickerInitialised
+
+            ) {
+
+
+
+                clearInterval(timer);
+
+
+
+            }
 
 
 
@@ -195,7 +169,7 @@
 
 
 
-        if (attempts >= 50) {
+        if (attempts >= 100) {
 
 
 
@@ -207,8 +181,11 @@
 
 
 
-    }, 100);
+    }, 200);
+
+
 
 
 
 })();
+
