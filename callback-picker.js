@@ -71,63 +71,30 @@
 
     }
 
-
-
-
-
     // ============================================================
-
     // INITIALISE BOTH FIELDS
-
     // ============================================================
-
-
 
     function initialiseAllPickers() {
 
-
-
         initialiseCallbackPicker("callback_datetime_utilities");
-
-
 
         initialiseCallbackPicker("callback_datetime_ovc");
 
-
-
     }
 
-
-
-
-
     // ============================================================
-
     // WAIT FOR CXONE FORM AND FLATPICKR
-
     // ============================================================
-
-
 
     var attempts = 0;
-
-
-
     var timer = setInterval(function () {
-
-
 
         attempts++;
 
-
-
         if (typeof flatpickr !== "undefined") {
 
-
-
             initialiseAllPickers();
-
-
 
             var utilities = document.getElementById(
 
@@ -135,15 +102,11 @@
 
             );
 
-
-
             var ovc = document.getElementById(
 
                 "callback_datetime_ovc"
 
             );
-
-
 
             // Stop once both fields have been initialised
 
@@ -155,37 +118,19 @@
 
             ) {
 
-
-
                 clearInterval(timer);
-
-
 
             }
 
-
-
         }
-
-
 
         if (attempts >= 100) {
 
-
-
             clearInterval(timer);
-
-
 
         }
 
-
-
     }, 200);
-
-
-
-
 
 })();
 
