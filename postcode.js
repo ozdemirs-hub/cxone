@@ -1,207 +1,255 @@
-var utilitiesPostcodes = [];
-var JSON_URL = 'https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json';
+(function () {
+    var utilitiesPostcodes = [];
+    var postcodeListLoaded = false;
+    var initialised = false;
 
-function getFields() {
-    return {
-        state: document.getElementById('3'),
-        postcode: document.getElementById('4'),
-        utilities: document.getElementById('product_utilities'),
-        ovc: document.getElementById('product_ovc'),
-        health: document.getElementById('product_health'),
-        callbackGroupUtilities: document.getElementById('callback_datetime_utilities_group'),
-        callbackUtilities: document.getElementById('callback_datetime_utilities'),
-        callbackGroupOVC: document.getElementById('callback_datetime_ovc_group'),
-        callbackOVC: document.getElementById('callback_datetime_ovc')
-    };
-}
+    var JSON_URL =
+        'https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json';
 
-function postcodeIsApproved(postcode) {
-    for (var i = 0; i < utilitiesPostcodes.length; i++) {
-        if (String(utilitiesPostcodes[i]).trim() === postcode) {
-            return true;
-        }
-    }
-    return false;
-}
+    var ALLOWED_STATES = ['NSW', 'ACT', 'QLD', 'SA', 'VIC'];
 
-// Product checkbox logic:
-// Health and OVC cannot be selected together.
-// Utilities remains independent, subject to eligibility.
-function updateProductSelection(changedCheckbox) {
-    var fields = getFields();
-
-    if (!fields.health || !fields.ovc || !fields.utilities) {
-        return;
+    function getFields() {
+        return {
+            state: document.getElementById('3'),
+            postcode: document.getElementById('4'),
+            health: document.getElementById('product_health'),
+            ovc: document.getElementById('product_ovc'),
+            utilities: document.getElementById('product_utilities'),
+            callbackUtilitiesGroup: document.getElementById(
+                'callback_datetime_utilities_group'
+            ),
+            callbackUtilities: document.getElementById(
+                'callback_datetime_utilities'
+            ),
+            callbackOVCGroup: document.getElementById(
+                'callback_datetime_ovc_group'
+            ),
+            callbackOVC: document.getElementById(
+                'callback_datetime_ovc'
+            )
+        };
     }
 
-    if (changedCheckbox === fields.ovc && fields.ovc.checked) {
-        fields.health.checked = false;
-    }
-
-    if (changedCheckbox === fields.health && fields.health.checked) {
-        fields.ovc.checked = false;
-    }
-
-    updateCallbackOVC();
-    updateCallbackUtilities();
-}
-
-function updateUtilities() {
-    var fields = getFields();
-
-    if (!fields.state || !fields.postcode || !fields.utilities) {
-        return;
-    }
-
-    var state = String(fields.state.value || '')
-        .trim()
-        .toUpperCase();
-
-    var postcode = String(fields.postcode.value || '').trim();
-
-    // Utilities is allowed to be considered only in these states
-    // and territory, subject to the approved postcode list.
-    var allowedStates = ['NSW', 'ACT', 'QLD', 'SA', 'VIC'];
-
-    // Disable Utilities for NT, TAS, WA and any unrecognised
-    // or blank state value.
-    if (allowedStates.indexOf(state) === -1) {
-        fields.utilities.disabled = true;
-        fields.utilities.checked = false;
-        updateCallbackUtilities();
-        return;
-    }
-
-    // For NSW, ACT, QLD, SA and VIC, check the postcode list.
-    // A valid postcode enables the checkbox but does not
-    // automatically select it.
-    if (postcodeIsApproved(postcode)) {
-        fields.utilities.disabled = false;
-    } else {
-        fields.utilities.disabled = true;
-        fields.utilities.checked = false;
-    }
-
-    updateCallbackUtilities();
-}
-
-function updateCallbackUtilities() {
-    var fields = getFields();
-
-    if (!fields.callbackGroupUtilities) {
-        return;
-    }
-
-    if (fields.utilities &&
-        fields.utilities.checked &&
-        !fields.utilities.disabled) {
-
-        fields.callbackGroupUtilities.style.display = 'block';
-
-    } else {
-        fields.callbackGroupUtilities.style.display = 'none';
-
-        if (fields.callbackUtilities) {
-            fields.callbackUtilities.value = '';
-        }
-    }
-}
-
-function updateCallbackOVC() {
-    var fields = getFields();
-
-    if (!fields.callbackGroupOVC) {
-        return;
-    }
-
-    if (fields.ovc && fields.ovc.checked) {
-        fields.callbackGroupOVC.style.display = 'block';
-    } else {
-        fields.callbackGroupOVC.style.display = 'none';
-
-        if (fields.callbackOVC) {
-            fields.callbackOVC.value = '';
-        }
-    }
-}
-
-function loadJSON() {
-    fetch(JSON_URL)
-        .then(function (response) {
-            if (!response.ok) {
-                throw new Error('HTTP error ' + response.status);
+    function isApprovedPostcode(postcode) {
+        for (var i = 0; i < utilitiesPostcodes.length; i++) {
+            if (String(utilitiesPostcodes[i]).trim() === postcode) {
+                return true;
             }
-
-            return response.json();
-        })
-        .then(function (data) {
-            utilitiesPostcodes = data;
-            updateUtilities();
-        })
-        .catch(function (error) {
-            console.log(
-                'ERROR loading Utilities postcode JSON: ' +
-                error.message
-            );
-        });
-}
-
-function initialise() {
-    var fields = getFields();
-
-    if (!fields.state ||
-        !fields.postcode ||
-        !fields.utilities ||
-        !fields.ovc ||
-        !fields.health ||
-        !fields.callbackGroupUtilities ||
-        !fields.callbackGroupOVC) {
-
-        setTimeout(initialise, 500);
-        return;
+        }
+        return false;
     }
 
-    // Initial state
-    fields.health.checked = true;
-    fields.ovc.checked = false;
-    fields.utilities.disabled = true;
-    fields.utilities.checked = false;
+    function updateUtilities() {
+        var f = getFields();
 
-    fields.callbackGroupUtilities.style.display = 'none';
-    fields.callbackGroupOVC.style.display = 'none';
+        if (!f.utilities || !f.state || !f.postcode) {
+            return;
+        }
 
-    // Recheck Utilities eligibility when state or postcode changes
-    fields.state.addEventListener('input', function () {
-        updateUtilities();
-    });
+        var state = String(f.state.value || '')
+            .trim()
+            .toUpperCase();
 
-    fields.state.addEventListener('change', function () {
-        updateUtilities();
-    });
+        var postcode = String(f.postcode.value || '').trim();
 
-    fields.postcode.addEventListener('input', function () {
-        updateUtilities();
-    });
+        // Always disable first. Enable only after all checks pass.
+        f.utilities.disabled = true;
 
-    fields.postcode.addEventListener('change', function () {
-        updateUtilities();
-    });
+        var stateAllowed = false;
 
-    // Product checkbox logic
-    fields.health.addEventListener('change', function () {
-        updateProductSelection(fields.health);
-    });
+        for (var i = 0; i < ALLOWED_STATES.length; i++) {
+            if (state === ALLOWED_STATES[i]) {
+                stateAllowed = true;
+                break;
+            }
+        }
 
-    fields.ovc.addEventListener('change', function () {
-        updateProductSelection(fields.ovc);
-    });
+        // Forbidden, blank or unrecognised state:
+        // disable and uncheck Utilities.
+        if (!stateAllowed) {
+            f.utilities.checked = false;
+            updateCallbackUtilities();
+            return;
+        }
 
-    fields.utilities.addEventListener('change', function () {
+        // Do not enable Utilities until the postcode list has loaded.
+        if (!postcodeListLoaded) {
+            f.utilities.checked = false;
+            updateCallbackUtilities();
+            return;
+        }
+
+        // State must be allowed AND postcode must be approved.
+        if (isApprovedPostcode(postcode)) {
+            f.utilities.disabled = false;
+        } else {
+            f.utilities.checked = false;
+        }
+
         updateCallbackUtilities();
-    });
+    }
 
-    // Load approved Utilities postcodes
-    loadJSON();
-}
+    function updateCallbackUtilities() {
+        var f = getFields();
 
-setTimeout(initialise, 500);
+        if (!f.callbackUtilitiesGroup) {
+            return;
+        }
+
+        if (f.utilities &&
+            f.utilities.checked &&
+            !f.utilities.disabled) {
+
+            f.callbackUtilitiesGroup.style.display = 'block';
+        } else {
+            f.callbackUtilitiesGroup.style.display = 'none';
+
+            if (f.callbackUtilities) {
+                f.callbackUtilities.value = '';
+            }
+        }
+    }
+
+    function updateCallbackOVC() {
+        var f = getFields();
+
+        if (!f.callbackOVCGroup) {
+            return;
+        }
+
+        if (f.ovc && f.ovc.checked) {
+            f.callbackOVCGroup.style.display = 'block';
+        } else {
+            f.callbackOVCGroup.style.display = 'none';
+
+            if (f.callbackOVC) {
+                f.callbackOVC.value = '';
+            }
+        }
+    }
+
+    function updateProductSelection(changedCheckbox) {
+        var f = getFields();
+
+        if (!f.health || !f.ovc) {
+            return;
+        }
+
+        // Health and OVC cannot be selected together.
+        if (changedCheckbox === f.ovc && f.ovc.checked) {
+            f.health.checked = false;
+        }
+
+        if (changedCheckbox === f.health && f.health.checked) {
+            f.ovc.checked = false;
+        }
+
+        updateCallbackOVC();
+        updateCallbackUtilities();
+        updateUtilities();
+    }
+
+    function loadPostcodes() {
+        fetch(JSON_URL)
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                return response.json();
+            })
+            .then(function (data) {
+                if (!Array.isArray(data)) {
+                    throw new Error(
+                        'Postcode JSON must contain an array'
+                    );
+                }
+
+                utilitiesPostcodes = data;
+                postcodeListLoaded = true;
+
+                updateUtilities();
+
+                console.log(
+                    'Utilities postcode list loaded:',
+                    utilitiesPostcodes.length
+                );
+            })
+            .catch(function (error) {
+                // Fail safely: Utilities remains disabled.
+                postcodeListLoaded = false;
+
+                var f = getFields();
+
+                if (f.utilities) {
+                    f.utilities.disabled = true;
+                    f.utilities.checked = false;
+                }
+
+                updateCallbackUtilities();
+
+                console.log(
+                    'Utilities postcode list failed to load:',
+                    error.message
+                );
+            });
+    }
+
+    function initialise() {
+        var f = getFields();
+
+        // Wait until the CXone form fields exist.
+        if (!f.state || !f.postcode || !f.health ||
+            !f.ovc || !f.utilities ||
+            !f.callbackUtilitiesGroup || !f.callbackOVCGroup) {
+
+            setTimeout(initialise, 500);
+            return;
+        }
+
+        if (initialised) {
+            return;
+        }
+
+        initialised = true;
+
+        // Set the initial product selections.
+        f.health.checked = true;
+        f.ovc.checked = false;
+
+        // Utilities MUST start disabled.
+        f.utilities.disabled = true;
+        f.utilities.checked = false;
+
+        // Hide both callback sections initially.
+        f.callbackUtilitiesGroup.style.display = 'none';
+        f.callbackOVCGroup.style.display = 'none';
+
+        // Recheck eligibility whenever state or postcode changes.
+        f.state.addEventListener('input', updateUtilities);
+        f.state.addEventListener('change', updateUtilities);
+        f.postcode.addEventListener('input', updateUtilities);
+        f.postcode.addEventListener('change', updateUtilities);
+
+        // Preserve the existing Health/OVC checkbox behaviour.
+        f.health.addEventListener('change', function () {
+            updateProductSelection(f.health);
+        });
+
+        f.ovc.addEventListener('change', function () {
+            updateProductSelection(f.ovc);
+        });
+
+        f.utilities.addEventListener('change', function () {
+            updateCallbackUtilities();
+        });
+
+        // Enforce the disabled state before starting the download.
+        updateUtilities();
+
+        // Load the approved postcode list.
+        loadPostcodes();
+    }
+
+    setTimeout(initialise, 500);
+})();
