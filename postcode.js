@@ -142,7 +142,7 @@ function updateUtilities() {
     // NSW and VIC are NEVER allowed
     // --------------------------------------------------------
 
-    if (state === 'NSW' || state === 'VIC') {
+    if (state === 'NT' || state === 'TAS' state === 'WA') {
 
         fields.utilities.disabled = true;
         fields.utilities.checked = false;
