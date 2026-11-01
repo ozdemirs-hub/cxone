@@ -1,5 +1,4 @@
 
-```javascript
 (function () {
     "use strict";
 
@@ -7,23 +6,13 @@
     // CONFIGURATION
     // ========================================================
 
-    var BASE_URL = "https://ozdemirs-hub.github.io/cxone/";
-
-    //var STATE_FILES = {
-    //    NSW: "nsw-postcodes.json",
-    //    ACT: "act-postcodes.json",
-    //    QLD: "qld-postcodes.json",
-    //    SA: "sa-postcodes.json",
-    //    VIC: "vic-postcodes.json"
-    //};
-
     var JSON_URL =
-    "https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json";
+        "https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json";
 
     var ALLOWED_STATES = ["NSW", "ACT", "QLD", "SA", "VIC"];
 
-    var postcodeData = {};
-    var loadingStates = {};
+    var approvedPostcodes = [];
+    var postcodesLoaded = false;
     var initialised = false;
 
     // ========================================================
@@ -78,9 +67,7 @@
     // ========================================================
 
     function normaliseState(value) {
-        var state = String(value || "")
-            .trim()
-            .toUpperCase();
+        var state = String(value || "").trim().toUpperCase();
 
         var map = {
             "NSW": "NSW",
@@ -108,40 +95,16 @@
     // POSTCODE VALIDATION
     // ========================================================
 
-    function postcodeIsApproved(state, postcode) {
-        var list = postcodeData[state];
-
-        if (!list) {
-            return false;
-        }
-
-        for (var i = 0; i < list.length; i++) {
-            if (String(list[i]).trim() === postcode) {
-                return true;
-            }
-        }
-
-        return false;
+    function postcodeIsApproved(postcode) {
+        return approvedPostcodes.indexOf(postcode) !== -1;
     }
 
-    function loadStatePostcodes(state) {
-        if (!STATE_FILES[state]) {
-            return;
-        }
-
-        if (postcodeData[state] || loadingStates[state]) {
-            return;
-        }
-
-        loadingStates[state] = true;
-
-        var filename = STATE_FILES[state];
-
-        fetch(BASE_URL + filename)
+    function loadPostcodes() {
+        fetch(JSON_URL)
             .then(function (response) {
                 if (!response.ok) {
                     throw new Error(
-                        filename + " HTTP " + response.status
+                        "Postcode JSON HTTP " + response.status
                     );
                 }
 
@@ -150,25 +113,32 @@
             .then(function (data) {
                 if (!Array.isArray(data)) {
                     throw new Error(
-                        filename + " must contain an array"
+                        "utilities-postcodes.json must contain an array"
                     );
                 }
 
-                postcodeData[state] = data;
+                approvedPostcodes = data.map(function (value) {
+                    return String(value).trim();
+                });
+
+                postcodesLoaded = true;
 
                 console.log(
-                    "Loaded " + filename +
-                    " - " + data.length + " postcodes"
+                    "Loaded approved postcodes:",
+                    approvedPostcodes.length
                 );
+
+                updateUtilities();
             })
             .catch(function (error) {
                 console.error(
                     "Postcode loading error:",
-                    error.message
+                    error
                 );
-            })
-            .then(function () {
-                delete loadingStates[state];
+
+                approvedPostcodes = [];
+                postcodesLoaded = false;
+
                 updateUtilities();
             });
     }
@@ -187,20 +157,14 @@
         var state = normaliseState(f.state.value);
         var postcode = String(f.postcode.value || "").trim();
 
-        var eligible = false;
+        var stateAllowed =
+            ALLOWED_STATES.indexOf(state) !== -1;
 
-        // NT, TAS and WA are always prohibited.
-        // Unknown states are also prohibited.
-        if (STATE_FILES[state]) {
-
-            if (!postcodeData[state]) {
-                loadStatePostcodes(state);
-            } else if (
-                postcodeIsApproved(state, postcode)
-            ) {
-                eligible = true;
-            }
-        }
+        var eligible =
+            stateAllowed &&
+            postcodesLoaded &&
+            /^[0-9]{4}$/.test(postcode) &&
+            postcodeIsApproved(postcode);
 
         f.utilities.disabled = !eligible;
 
@@ -209,6 +173,14 @@
         }
 
         updateUtilitiesDelivery();
+
+        console.log("Utilities eligibility:", {
+            state: state,
+            postcode: postcode,
+            stateAllowed: stateAllowed,
+            postcodeApproved: postcodeIsApproved(postcode),
+            eligible: eligible
+        });
     }
 
     // ========================================================
@@ -234,15 +206,16 @@
     function updateOVCDelivery() {
         var f = getFields();
 
-        if (!f.ovcDelivery || !f.ovc) {
+        if (!f.ovc || !f.ovcDelivery) {
             return;
         }
 
-        if (f.ovc.checked) {
-            f.ovcDelivery.style.display = "block";
-        } else {
-            f.ovcDelivery.style.display = "none";
+        var selected = f.ovc.checked;
 
+        f.ovcDelivery.style.display =
+            selected ? "block" : "none";
+
+        if (!selected) {
             f.ovcLive.checked = false;
             f.ovcCallback.checked = false;
         }
@@ -253,8 +226,13 @@
     function updateOVCCallback() {
         var f = getFields();
 
-        var show = f.ovc.checked &&
-                   f.ovcCallback.checked;
+        if (!f.ovcDateGroup || !f.ovcCallback) {
+            return;
+        }
+
+        var show =
+            f.ovc.checked &&
+            f.ovcCallback.checked;
 
         f.ovcDateGroup.style.display =
             show ? "block" : "none";
@@ -291,7 +269,7 @@
     function updateUtilitiesDelivery() {
         var f = getFields();
 
-        if (!f.utilitiesDelivery || !f.utilities) {
+        if (!f.utilities || !f.utilitiesDelivery) {
             return;
         }
 
@@ -299,11 +277,10 @@
             f.utilities.checked &&
             !f.utilities.disabled;
 
-        if (selected) {
-            f.utilitiesDelivery.style.display = "block";
-        } else {
-            f.utilitiesDelivery.style.display = "none";
+        f.utilitiesDelivery.style.display =
+            selected ? "block" : "none";
 
+        if (!selected) {
             f.utilitiesLive.checked = false;
             f.utilitiesCallback.checked = false;
         }
@@ -313,6 +290,10 @@
 
     function updateUtilitiesCallback() {
         var f = getFields();
+
+        if (!f.utilitiesDateGroup || !f.utilitiesCallback) {
+            return;
+        }
 
         var show =
             f.utilities.checked &&
@@ -369,43 +350,9 @@
             f.ovc.checked = false;
         }
 
+        // Utilities can be selected with Health or OVC.
         updateOVCDelivery();
-        updateUtilities();
-    }
-
-    // ========================================================
-    // FLATPICKR INITIALISATION
-    // ========================================================
-
-    function initialiseCalendar(field) {
-        if (!field || field._flatpickr) {
-            return;
-        }
-
-        flatpickr(field, {
-            enableTime: true,
-            dateFormat: "Y-m-d H:i:S",
-            altInput: true,
-            altFormat: "d/m/Y h:i K",
-            minuteIncrement: 30,
-            time_24hr: false,
-            minDate: "today",
-            minTime: "08:00",
-            maxTime: "18:00",
-            allowInput: false
-        });
-    }
-
-    function initialiseCalendars() {
-        var f = getFields();
-
-        if (typeof flatpickr === "undefined") {
-            setTimeout(initialiseCalendars, 300);
-            return;
-        }
-
-        initialiseCalendar(f.ovcDate);
-        initialiseCalendar(f.utilitiesDate);
+        updateUtilitiesDelivery();
     }
 
     // ========================================================
@@ -510,18 +457,17 @@
             "change", selectUtilitiesCallback
         );
 
-        // Calendars
-        initialiseCalendars();
-
         // Apply initial eligibility
         updateUtilities();
 
+        // Load approved postcodes
+        loadPostcodes();
+
         console.log(
-            "CXone postcode and delivery controls initialised"
+            "CXone product and delivery controls initialised"
         );
     }
 
     setTimeout(initialise, 500);
 
 })();
-```
