@@ -204,40 +204,41 @@
     // ========================================================
 
     function updateOVCDelivery() {
-    var f = getFields();
-
-    if (!f.ovc || !f.ovcDelivery) return;
-
-    var ovcSelected = f.ovc.checked;
-    var utilitiesSelected =
-        f.utilities.checked && !f.utilities.disabled;
-
-    // Display OVC delivery options only when OVC is selected
-    f.ovcDelivery.style.display =
-        ovcSelected ? "block" : "none";
-
-    // When OVC + Utilities are selected,
-    // OVC must only offer Callback
-    var liveTransferContainer =
-        f.ovcLive.closest(".radio");
-
-    if (liveTransferContainer) {
-        liveTransferContainer.style.display =
-            utilitiesSelected ? "none" : "block";
-    } else {
-        f.ovcLive.style.display =
-            utilitiesSelected ? "none" : "";
-    }
-
-    // Clear OVC Live Transfer if Utilities is selected
-    if (utilitiesSelected) {
-        f.ovcLive.checked = false;
-    }
-
-    // Clear delivery selections if OVC is deselected
-    if (!ovcSelected) {
-        f.ovcLive.checked = false;
-        f.ovcCallback.checked = false;
+        var f = getFields();
+    
+        if (!f.ovc || !f.ovcDelivery) return;
+    
+        var ovcSelected = f.ovc.checked;
+        var utilitiesSelected =
+            f.utilities.checked && !f.utilities.disabled;
+    
+        // Display OVC delivery options only when OVC is selected
+        f.ovcDelivery.style.display =
+            ovcSelected ? "block" : "none";
+    
+        // When OVC + Utilities are selected,
+        // OVC must only offer Callback
+        var liveTransferContainer =
+            f.ovcLive.closest(".radio");
+    
+        if (liveTransferContainer) {
+            liveTransferContainer.style.display =
+                utilitiesSelected ? "none" : "block";
+        } else {
+            f.ovcLive.style.display =
+                utilitiesSelected ? "none" : "";
+        }
+    
+        // Clear OVC Live Transfer if Utilities is selected
+        if (utilitiesSelected) {
+            f.ovcLive.checked = false;
+        }
+    
+        // Clear delivery selections if OVC is deselected
+        if (!ovcSelected) {
+            f.ovcLive.checked = false;
+            f.ovcCallback.checked = false;
+        }
     }
 
     updateOVCCallback();
