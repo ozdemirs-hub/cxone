@@ -182,7 +182,16 @@
             eligible: eligible
         });
     }
-
+console.log("UTILITIES DEBUG", {
+    state: state,
+    postcode: postcode,
+    stateAllowed: stateAllowed,
+    postcodesLoaded: postcodesLoaded,
+    postcodeApproved: postcodeIsApproved(postcode),
+    eligible: eligible,
+    checkboxDisabled: f.utilities.disabled,
+    checkboxFound: !!f.utilities
+});
     // ========================================================
     // CLEAR CALLBACK DATE
     // ========================================================
