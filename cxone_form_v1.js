@@ -205,40 +205,22 @@
 
     function updateOVCDelivery() {
         var f = getFields();
-    
-        if (!f.ovc || !f.ovcDelivery) return;
-    
-        var ovcSelected = f.ovc.checked;
-        var utilitiesSelected =
-            f.utilities.checked && !f.utilities.disabled;
-    
-        // Display OVC delivery options only when OVC is selected
+
+        if (!f.ovc || !f.ovcDelivery) {
+            return;
+        }
+
+        var selected = f.ovc.checked;
+
         f.ovcDelivery.style.display =
-            ovcSelected ? "block" : "none";
-    
-        // When OVC + Utilities are selected,
-        // OVC must only offer Callback
-        var liveTransferContainer =
-            f.ovcLive.closest(".radio");
-    
-        if (liveTransferContainer) {
-            liveTransferContainer.style.display =
-                utilitiesSelected ? "none" : "block";
-        } else {
-            f.ovcLive.style.display =
-                utilitiesSelected ? "none" : "";
-        }
-    
-        // Clear OVC Live Transfer if Utilities is selected
-        if (utilitiesSelected) {
-            f.ovcLive.checked = false;
-        }
-    
-        // Clear delivery selections if OVC is deselected
-        if (!ovcSelected) {
+            selected ? "block" : "none";
+
+        if (!selected) {
             f.ovcLive.checked = false;
             f.ovcCallback.checked = false;
         }
+
+        updateOVCCallback();
     }
 
     function updateOVCCallback() {
@@ -261,59 +243,50 @@
     }
 
     function selectOVCLive() {
-    var f = getFields();
+        var f = getFields();
 
-    // Prevent OVC Live Transfer when Utilities is selected
-    if (f.utilities.checked && !f.utilities.disabled) {
-        f.ovcLive.checked = false;
+        if (f.ovcLive.checked) {
+            f.ovcCallback.checked = false;
+        }
+
         updateOVCCallback();
-        return;
     }
-
-    if (f.ovcLive.checked) {
-        f.ovcCallback.checked = false;
-    }
-
-    updateOVCCallback();
-}
 
     function selectOVCCallback() {
-    var f = getFields();
+        var f = getFields();
 
-    if (f.ovcCallback.checked) {
-        f.ovcLive.checked = false;
+        if (f.ovcCallback.checked) {
+            f.ovcLive.checked = false;
+        }
+
+        updateOVCCallback();
     }
-
-    updateOVCCallback();
-}
 
     // ========================================================
     // UTILITIES DELIVERY CONTROLS
     // ========================================================
 
     function updateUtilitiesDelivery() {
-    var f = getFields();
+        var f = getFields();
 
-    if (!f.utilities || !f.utilitiesDelivery) return;
+        if (!f.utilities || !f.utilitiesDelivery) {
+            return;
+        }
 
-    var utilitiesSelected =
-        f.utilities.checked && !f.utilities.disabled;
+        var selected =
+            f.utilities.checked &&
+            !f.utilities.disabled;
 
-    // Utilities always offers both delivery methods
-    // whenever Utilities is selected
-    f.utilitiesDelivery.style.display =
-        utilitiesSelected ? "block" : "none";
+        f.utilitiesDelivery.style.display =
+            selected ? "block" : "none";
 
-    if (!utilitiesSelected) {
-        f.utilitiesLive.checked = false;
-        f.utilitiesCallback.checked = false;
+        if (!selected) {
+            f.utilitiesLive.checked = false;
+            f.utilitiesCallback.checked = false;
+        }
+
+        updateUtilitiesCallback();
     }
-
-    updateUtilitiesCallback();
-
-    // Refresh OVC options whenever Utilities changes
-    updateOVCDelivery();
-}
 
     function updateUtilitiesCallback() {
         var f = getFields();
@@ -360,11 +333,27 @@
     // ========================================================
 
     function updateProductSelection(changedCheckbox) {
-    // Health, OVC and Utilities may now be selected together.
-    // No automatic deselection of Health or OVC.
+        var f = getFields();
 
-    updateUtilitiesDelivery();
-}
+        // Health and OVC cannot both be selected.
+        if (
+            changedCheckbox === f.ovc &&
+            f.ovc.checked
+        ) {
+            f.health.checked = false;
+        }
+
+        if (
+            changedCheckbox === f.health &&
+            f.health.checked
+        ) {
+            f.ovc.checked = false;
+        }
+
+        // Utilities can be selected with Health or OVC.
+        updateOVCDelivery();
+        updateUtilitiesDelivery();
+    }
 
     // ========================================================
     // INITIALISATION
@@ -373,46 +362,26 @@
     function initialise() {
         var f = getFields();
 
-        
-if (
-    !f.state ||
-    !f.postcode ||
-    !f.health ||
-    !f.ovc ||
-    !f.utilities ||
-    !f.ovcDelivery ||
-    !f.ovcLive ||
-    !f.ovcCallback ||
-    !f.ovcDateGroup ||
-    !f.ovcDate ||
-    !f.utilitiesDelivery ||
-    !f.utilitiesLive ||
-    !f.utilitiesCallback ||
-    !f.utilitiesDateGroup ||
-    !f.utilitiesDate
-) {
-    console.error("CXone form missing fields:", {
-        state: !!f.state,
-        postcode: !!f.postcode,
-        health: !!f.health,
-        ovc: !!f.ovc,
-        utilities: !!f.utilities,
-        ovcDelivery: !!f.ovcDelivery,
-        ovcLive: !!f.ovcLive,
-        ovcCallback: !!f.ovcCallback,
-        ovcDateGroup: !!f.ovcDateGroup,
-        ovcDate: !!f.ovcDate,
-        utilitiesDelivery: !!f.utilitiesDelivery,
-        utilitiesLive: !!f.utilitiesLive,
-        utilitiesCallback: !!f.utilitiesCallback,
-        utilitiesDateGroup: !!f.utilitiesDateGroup,
-        utilitiesDate: !!f.utilitiesDate
-    });
-
-    setTimeout(initialise, 500);
-    return;
-}
-
+        if (
+            !f.state ||
+            !f.postcode ||
+            !f.health ||
+            !f.ovc ||
+            !f.utilities ||
+            !f.ovcDelivery ||
+            !f.ovcLive ||
+            !f.ovcCallback ||
+            !f.ovcDateGroup ||
+            !f.ovcDate ||
+            !f.utilitiesDelivery ||
+            !f.utilitiesLive ||
+            !f.utilitiesCallback ||
+            !f.utilitiesDateGroup ||
+            !f.utilitiesDate
+        ) {
+            setTimeout(initialise, 500);
+            return;
+        }
 
         if (initialised) {
             return;
