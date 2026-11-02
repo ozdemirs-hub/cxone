@@ -1,6 +1,7 @@
 
 (function () {
     "use strict";
+    alert("CXone NEW delivery rules script loaded");
 
     // ========================================================
     // CONFIGURATION
