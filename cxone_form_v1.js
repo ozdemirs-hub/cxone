@@ -373,26 +373,46 @@
     function initialise() {
         var f = getFields();
 
-        if (
-            !f.state ||
-            !f.postcode ||
-            !f.health ||
-            !f.ovc ||
-            !f.utilities ||
-            !f.ovcDelivery ||
-            !f.ovcLive ||
-            !f.ovcCallback ||
-            !f.ovcDateGroup ||
-            !f.ovcDate ||
-            !f.utilitiesDelivery ||
-            !f.utilitiesLive ||
-            !f.utilitiesCallback ||
-            !f.utilitiesDateGroup ||
-            !f.utilitiesDate
-        ) {
-            setTimeout(initialise, 500);
-            return;
-        }
+        
+if (
+    !f.state ||
+    !f.postcode ||
+    !f.health ||
+    !f.ovc ||
+    !f.utilities ||
+    !f.ovcDelivery ||
+    !f.ovcLive ||
+    !f.ovcCallback ||
+    !f.ovcDateGroup ||
+    !f.ovcDate ||
+    !f.utilitiesDelivery ||
+    !f.utilitiesLive ||
+    !f.utilitiesCallback ||
+    !f.utilitiesDateGroup ||
+    !f.utilitiesDate
+) {
+    console.error("CXone form missing fields:", {
+        state: !!f.state,
+        postcode: !!f.postcode,
+        health: !!f.health,
+        ovc: !!f.ovc,
+        utilities: !!f.utilities,
+        ovcDelivery: !!f.ovcDelivery,
+        ovcLive: !!f.ovcLive,
+        ovcCallback: !!f.ovcCallback,
+        ovcDateGroup: !!f.ovcDateGroup,
+        ovcDate: !!f.ovcDate,
+        utilitiesDelivery: !!f.utilitiesDelivery,
+        utilitiesLive: !!f.utilitiesLive,
+        utilitiesCallback: !!f.utilitiesCallback,
+        utilitiesDateGroup: !!f.utilitiesDateGroup,
+        utilitiesDate: !!f.utilitiesDate
+    });
+
+    setTimeout(initialise, 500);
+    return;
+}
+
 
         if (initialised) {
             return;
