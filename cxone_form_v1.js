@@ -216,7 +216,7 @@
             selected ? "block" : "none";
 
         if (!selected) {
-            //f.ovcLive.checked = false;
+            f.ovcLive.checked = false;
             f.ovcCallback.checked = false;
         }
 
