@@ -182,16 +182,7 @@
             eligible: eligible
         });
     }
-console.log("UTILITIES DEBUG", {
-    state: state,
-    postcode: postcode,
-    stateAllowed: stateAllowed,
-    postcodesLoaded: postcodesLoaded,
-    postcodeApproved: postcodeIsApproved(postcode),
-    eligible: eligible,
-    checkboxDisabled: f.utilities.disabled,
-    checkboxFound: !!f.utilities
-});
+
     // ========================================================
     // CLEAR CALLBACK DATE
     // ========================================================
@@ -249,8 +240,6 @@ console.log("UTILITIES DEBUG", {
             f.ovcCallback.checked = false;
         }
     }
-
-    updateOVCCallback();
 
     function updateOVCCallback() {
         var f = getFields();
