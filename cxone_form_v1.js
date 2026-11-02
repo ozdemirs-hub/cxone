@@ -203,25 +203,46 @@
     // OVC DELIVERY CONTROLS
     // ========================================================
 
-    function updateOVCDelivery() {
-        var f = getFields();
+    
+function updateOVCDelivery() {
+    var f = getFields();
 
-        if (!f.ovc || !f.ovcDelivery) {
-            return;
-        }
-
-        var selected = f.ovc.checked;
-
-        f.ovcDelivery.style.display =
-            selected ? "block" : "none";
-
-        if (!selected) {
-            f.ovcLive.checked = false;
-            f.ovcCallback.checked = false;
-        }
-
-        updateOVCCallback();
+    if (!f.ovc || !f.ovcDelivery ||
+        !f.ovcLive || !f.ovcCallback ||
+        !f.utilities) {
+        return;
     }
+
+    var ovcSelected = f.ovc.checked;
+    var utilitiesSelected =
+        f.utilities.checked && !f.utilities.disabled;
+
+    f.ovcDelivery.style.display =
+        ovcSelected ? "block" : "none";
+
+    // Hide OVC Live Transfer when Utilities is selected.
+    // Otherwise, show it.
+    var liveLabel = f.ovcLive.closest("label");
+
+    if (liveLabel) {
+        liveLabel.style.display =
+            utilitiesSelected ? "none" : "";
+    }
+
+    // Clear an existing OVC Live Transfer selection
+    // if Utilities is also selected.
+    if (utilitiesSelected) {
+        f.ovcLive.checked = false;
+    }
+
+    if (!ovcSelected) {
+        f.ovcLive.checked = false;
+        f.ovcCallback.checked = false;
+    }
+
+    updateOVCCallback();
+}
+
 
     function updateOVCCallback() {
         var f = getFields();
@@ -242,15 +263,23 @@
         }
     }
 
-    function selectOVCLive() {
-        var f = getFields();
+    
+function selectOVCLive() {
+    var f = getFields();
 
-        if (f.ovcLive.checked) {
-            f.ovcCallback.checked = false;
-        }
-
+    if (f.utilities.checked && !f.utilities.disabled) {
+        f.ovcLive.checked = false;
         updateOVCCallback();
+        return;
     }
+
+    if (f.ovcLive.checked) {
+        f.ovcCallback.checked = false;
+    }
+
+    updateOVCCallback();
+}
+
 
     function selectOVCCallback() {
         var f = getFields();
@@ -266,27 +295,31 @@
     // UTILITIES DELIVERY CONTROLS
     // ========================================================
 
-    function updateUtilitiesDelivery() {
-        var f = getFields();
+    
+function updateUtilitiesDelivery() {
+    var f = getFields();
 
-        if (!f.utilities || !f.utilitiesDelivery) {
-            return;
-        }
-
-        var selected =
-            f.utilities.checked &&
-            !f.utilities.disabled;
-
-        f.utilitiesDelivery.style.display =
-            selected ? "block" : "none";
-
-        if (!selected) {
-            f.utilitiesLive.checked = false;
-            f.utilitiesCallback.checked = false;
-        }
-
-        updateUtilitiesCallback();
+    if (!f.utilities || !f.utilitiesDelivery) {
+        return;
     }
+
+    var selected =
+        f.utilities.checked && !f.utilities.disabled;
+
+    f.utilitiesDelivery.style.display =
+        selected ? "block" : "none";
+
+    if (!selected) {
+        f.utilitiesLive.checked = false;
+        f.utilitiesCallback.checked = false;
+    }
+
+    updateUtilitiesCallback();
+
+    // Refresh OVC delivery options.
+    updateOVCDelivery();
+}
+
 
     function updateUtilitiesCallback() {
         var f = getFields();
@@ -332,28 +365,14 @@
     // PRODUCT SELECTION
     // ========================================================
 
-    function updateProductSelection(changedCheckbox) {
-        var f = getFields();
+    
+function updateProductSelection(changedCheckbox) {
+    // Health, OVC and Utilities may all be selected together.
+    // Utilities eligibility is still controlled by postcode/state.
+    updateOVCDelivery();
+    updateUtilitiesDelivery();
+}
 
-        // Health and OVC cannot both be selected.
-        if (
-            changedCheckbox === f.ovc &&
-            f.ovc.checked
-        ) {
-            f.health.checked = false;
-        }
-
-        if (
-            changedCheckbox === f.health &&
-            f.health.checked
-        ) {
-            f.ovc.checked = false;
-        }
-
-        // Utilities can be selected with Health or OVC.
-        updateOVCDelivery();
-        updateUtilitiesDelivery();
-    }
 
     // ========================================================
     // INITIALISATION
