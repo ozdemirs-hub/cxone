@@ -10,7 +10,7 @@
     var JSON_URL =
         "https://ozdemirs-hub.github.io/cxone/utilities-postcodes.json";
 
-    var ALLOWED_STATES = ["NSW", "ACT", "QLD", "SA", "VIC"];
+    var ALLOWED_STATES = ["NSW", "QLD", "SA"];
 
     var approvedPostcodes = [];
     var postcodesLoaded = false;
