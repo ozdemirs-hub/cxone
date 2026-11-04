@@ -367,12 +367,25 @@ function updateUtilitiesDelivery() {
     // ========================================================
 
     
+
 function updateProductSelection(changedCheckbox) {
-    // Health, OVC and Utilities may all be selected together.
-    // Utilities eligibility is still controlled by postcode/state.
+    var f = getFields();
+
+    // Health and OVC cannot be selected together.
+    if (changedCheckbox === f.health && f.health.checked) {
+        f.ovc.checked = false;
+    }
+
+    if (changedCheckbox === f.ovc && f.ovc.checked) {
+        f.health.checked = false;
+    }
+
+    // Utilities remains independent.
+    // Refresh delivery options after product changes.
     updateOVCDelivery();
     updateUtilitiesDelivery();
 }
+
 
 
     // ========================================================
