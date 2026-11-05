@@ -1,7 +1,6 @@
 
 (function () {
     "use strict";
-    //alert("CXone NEW delivery rules script loaded");
 
     // ========================================================
     // CONFIGURATION
@@ -29,37 +28,17 @@
             ovc: document.getElementById("product_ovc"),
             utilities: document.getElementById("product_utilities"),
 
-            ovcDelivery: document.getElementById(
-                "ovc_delivery_group"
-            ),
-            ovcLive: document.getElementById(
-                "ovc_live_transfer"
-            ),
-            ovcCallback: document.getElementById(
-                "ovc_callback"
-            ),
-            ovcDateGroup: document.getElementById(
-                "callback_datetime_ovc_group"
-            ),
-            ovcDate: document.getElementById(
-                "callback_datetime_ovc"
-            ),
+            ovcDelivery: document.getElementById("ovc_delivery_group"),
+            ovcLive: document.getElementById("ovc_live_transfer"),
+            ovcCallback: document.getElementById("ovc_callback"),
+            ovcDateGroup: document.getElementById("callback_datetime_ovc_group"),
+            ovcDate: document.getElementById("callback_datetime_ovc"),
 
-            utilitiesDelivery: document.getElementById(
-                "utilities_delivery_group"
-            ),
-            utilitiesLive: document.getElementById(
-                "utilities_live_transfer"
-            ),
-            utilitiesCallback: document.getElementById(
-                "utilities_callback"
-            ),
-            utilitiesDateGroup: document.getElementById(
-                "callback_datetime_utilities_group"
-            ),
-            utilitiesDate: document.getElementById(
-                "callback_datetime_utilities"
-            )
+            utilitiesDelivery: document.getElementById("utilities_delivery_group"),
+            utilitiesLive: document.getElementById("utilities_live_transfer"),
+            utilitiesCallback: document.getElementById("utilities_callback"),
+            utilitiesDateGroup: document.getElementById("callback_datetime_utilities_group"),
+            utilitiesDate: document.getElementById("callback_datetime_utilities")
         };
     }
 
@@ -132,16 +111,200 @@
                 updateUtilities();
             })
             .catch(function (error) {
-                console.error(
-                    "Postcode loading error:",
-                    error
-                );
+                console.error("Postcode loading error:", error);
 
                 approvedPostcodes = [];
                 postcodesLoaded = false;
 
                 updateUtilities();
             });
+    }
+
+    // ========================================================
+    // CLEAR CALLBACK DATE
+    // ========================================================
+
+    function clearCallbackDate(field) {
+        if (!field) {
+            return;
+        }
+
+        if (field._flatpickr) {
+            field._flatpickr.clear();
+        } else {
+            field.value = "";
+        }
+    }
+
+    // ========================================================
+    // OVC DELIVERY CONTROLS
+    // DEFAULT: CALLBACK
+    // ========================================================
+
+    function updateOVCDelivery() {
+        var f = getFields();
+
+        if (!f.ovc || !f.ovcDelivery ||
+            !f.ovcLive || !f.ovcCallback ||
+            !f.utilities) {
+            return;
+        }
+
+        var ovcSelected = f.ovc.checked;
+
+        var utilitiesSelected =
+            f.utilities.checked && !f.utilities.disabled;
+
+        f.ovcDelivery.style.display =
+            ovcSelected ? "block" : "none";
+
+        var liveLabel = f.ovcLive.closest("label");
+
+        if (liveLabel) {
+            liveLabel.style.display =
+                utilitiesSelected ? "none" : "";
+        }
+
+        if (!ovcSelected) {
+            f.ovcLive.checked = false;
+            f.ovcCallback.checked = false;
+        } else {
+            // OVC Live Transfer is not allowed when
+            // Utilities is also selected.
+            if (utilitiesSelected) {
+                f.ovcLive.checked = false;
+            }
+
+            // Apply default if no delivery method is selected.
+            if (!f.ovcLive.checked && !f.ovcCallback.checked) {
+                f.ovcCallback.checked = true;
+            }
+        }
+
+        updateOVCCallback();
+    }
+
+    function updateOVCCallback() {
+        var f = getFields();
+
+        if (!f.ovc || !f.ovcDateGroup || !f.ovcCallback) {
+            return;
+        }
+
+        var show =
+            f.ovc.checked &&
+            f.ovcCallback.checked;
+
+        f.ovcDateGroup.style.display =
+            show ? "block" : "none";
+
+        if (!show) {
+            clearCallbackDate(f.ovcDate);
+        }
+    }
+
+    function selectOVCLive() {
+        var f = getFields();
+
+        if (f.utilities.checked && !f.utilities.disabled) {
+            f.ovcLive.checked = false;
+            f.ovcCallback.checked = true;
+            updateOVCCallback();
+            return;
+        }
+
+        if (f.ovcLive.checked) {
+            f.ovcCallback.checked = false;
+        }
+
+        updateOVCCallback();
+    }
+
+    function selectOVCCallback() {
+        var f = getFields();
+
+        if (f.ovcCallback.checked) {
+            f.ovcLive.checked = false;
+        }
+
+        updateOVCCallback();
+    }
+
+    // ========================================================
+    // UTILITIES DELIVERY CONTROLS
+    // DEFAULT: LIVE TRANSFER
+    // ========================================================
+
+    function updateUtilitiesDelivery() {
+        var f = getFields();
+
+        if (!f.utilities || !f.utilitiesDelivery ||
+            !f.utilitiesLive || !f.utilitiesCallback) {
+            return;
+        }
+
+        var selected =
+            f.utilities.checked && !f.utilities.disabled;
+
+        f.utilitiesDelivery.style.display =
+            selected ? "block" : "none";
+
+        if (!selected) {
+            f.utilitiesLive.checked = false;
+            f.utilitiesCallback.checked = false;
+        } else {
+            // Apply default if no delivery method is selected.
+            if (!f.utilitiesLive.checked &&
+                !f.utilitiesCallback.checked) {
+                f.utilitiesLive.checked = true;
+            }
+        }
+
+        updateUtilitiesCallback();
+
+        // Refresh OVC options when Utilities changes.
+        updateOVCDelivery();
+    }
+
+    function updateUtilitiesCallback() {
+        var f = getFields();
+
+        if (!f.utilities || !f.utilitiesDateGroup ||
+            !f.utilitiesCallback) {
+            return;
+        }
+
+        var show =
+            f.utilities.checked &&
+            !f.utilities.disabled &&
+            f.utilitiesCallback.checked;
+
+        f.utilitiesDateGroup.style.display =
+            show ? "block" : "none";
+
+        if (!show) {
+            clearCallbackDate(f.utilitiesDate);
+        }
+    }
+
+    function selectUtilitiesLive() {
+        var f = getFields();
+
+        if (f.utilitiesLive.checked) {
+            f.utilitiesCallback.checked = false;
+        }
+
+        updateUtilitiesCallback();
+    }
+
+    function selectUtilitiesCallback() {
+        var f = getFields();
+
+        if (f.utilitiesCallback.checked) {
+            f.utilitiesLive.checked = false;
+        }
+
+        updateUtilitiesCallback();
     }
 
     // ========================================================
@@ -185,208 +348,25 @@
     }
 
     // ========================================================
-    // CLEAR CALLBACK DATE
-    // ========================================================
-
-    function clearCallbackDate(field) {
-        if (!field) {
-            return;
-        }
-
-        if (field._flatpickr) {
-            field._flatpickr.clear();
-        } else {
-            field.value = "";
-        }
-    }
-
-    // ========================================================
-    // OVC DELIVERY CONTROLS
-    // ========================================================
-
-    
-function updateOVCDelivery() {
-    var f = getFields();
-
-    if (!f.ovc || !f.ovcDelivery ||
-        !f.ovcLive || !f.ovcCallback ||
-        !f.utilities) {
-        return;
-    }
-
-    var ovcSelected = f.ovc.checked;
-    var utilitiesSelected =
-        f.utilities.checked && !f.utilities.disabled;
-
-    f.ovcDelivery.style.display =
-        ovcSelected ? "block" : "none";
-
-    // Hide OVC Live Transfer when Utilities is selected.
-    // Otherwise, show it.
-    var liveLabel = f.ovcLive.closest("label");
-
-    if (liveLabel) {
-        liveLabel.style.display =
-            utilitiesSelected ? "none" : "";
-    }
-
-    // Clear an existing OVC Live Transfer selection
-    // if Utilities is also selected.
-    if (utilitiesSelected) {
-        f.ovcLive.checked = false;
-    }
-
-    if (!ovcSelected) {
-        f.ovcLive.checked = false;
-        f.ovcCallback.checked = false;
-    }
-
-    updateOVCCallback();
-}
-
-
-    function updateOVCCallback() {
-        var f = getFields();
-
-        if (!f.ovcDateGroup || !f.ovcCallback) {
-            return;
-        }
-
-        var show =
-            f.ovc.checked &&
-            f.ovcCallback.checked;
-
-        f.ovcDateGroup.style.display =
-            show ? "block" : "none";
-
-        if (!show) {
-            clearCallbackDate(f.ovcDate);
-        }
-    }
-
-    
-function selectOVCLive() {
-    var f = getFields();
-
-    if (f.utilities.checked && !f.utilities.disabled) {
-        f.ovcLive.checked = false;
-        updateOVCCallback();
-        return;
-    }
-
-    if (f.ovcLive.checked) {
-        f.ovcCallback.checked = false;
-    }
-
-    updateOVCCallback();
-}
-
-
-    function selectOVCCallback() {
-        var f = getFields();
-
-        if (f.ovcCallback.checked) {
-            f.ovcLive.checked = false;
-        }
-
-        updateOVCCallback();
-    }
-
-    // ========================================================
-    // UTILITIES DELIVERY CONTROLS
-    // ========================================================
-
-    
-function updateUtilitiesDelivery() {
-    var f = getFields();
-
-    if (!f.utilities || !f.utilitiesDelivery) {
-        return;
-    }
-
-    var selected =
-        f.utilities.checked && !f.utilities.disabled;
-
-    f.utilitiesDelivery.style.display =
-        selected ? "block" : "none";
-
-    if (!selected) {
-        f.utilitiesLive.checked = false;
-        f.utilitiesCallback.checked = false;
-    }
-
-    updateUtilitiesCallback();
-
-    // Refresh OVC delivery options.
-    updateOVCDelivery();
-}
-
-
-    function updateUtilitiesCallback() {
-        var f = getFields();
-
-        if (!f.utilitiesDateGroup || !f.utilitiesCallback) {
-            return;
-        }
-
-        var show =
-            f.utilities.checked &&
-            !f.utilities.disabled &&
-            f.utilitiesCallback.checked;
-
-        f.utilitiesDateGroup.style.display =
-            show ? "block" : "none";
-
-        if (!show) {
-            clearCallbackDate(f.utilitiesDate);
-        }
-    }
-
-    function selectUtilitiesLive() {
-        var f = getFields();
-
-        if (f.utilitiesLive.checked) {
-            f.utilitiesCallback.checked = false;
-        }
-
-        updateUtilitiesCallback();
-    }
-
-    function selectUtilitiesCallback() {
-        var f = getFields();
-
-        if (f.utilitiesCallback.checked) {
-            f.utilitiesLive.checked = false;
-        }
-
-        updateUtilitiesCallback();
-    }
-
-    // ========================================================
     // PRODUCT SELECTION
     // ========================================================
 
-    
+    function updateProductSelection(changedCheckbox) {
+        var f = getFields();
 
-function updateProductSelection(changedCheckbox) {
-    var f = getFields();
+        // Health and OVC cannot be selected together.
+        if (changedCheckbox === f.health && f.health.checked) {
+            f.ovc.checked = false;
+        }
 
-    // Health and OVC cannot be selected together.
-    if (changedCheckbox === f.health && f.health.checked) {
-        f.ovc.checked = false;
+        if (changedCheckbox === f.ovc && f.ovc.checked) {
+            f.health.checked = false;
+        }
+
+        // Utilities remains independent.
+        updateOVCDelivery();
+        updateUtilitiesDelivery();
     }
-
-    if (changedCheckbox === f.ovc && f.ovc.checked) {
-        f.health.checked = false;
-    }
-
-    // Utilities remains independent.
-    // Refresh delivery options after product changes.
-    updateOVCDelivery();
-    updateUtilitiesDelivery();
-}
-
-
 
     // ========================================================
     // INITIALISATION
@@ -430,6 +410,7 @@ function updateProductSelection(changedCheckbox) {
         f.utilities.disabled = true;
 
         // Initial delivery state
+        // Defaults will be applied when products are selected.
         f.ovcLive.checked = false;
         f.ovcCallback.checked = false;
 
@@ -445,19 +426,11 @@ function updateProductSelection(changedCheckbox) {
         f.utilitiesDateGroup.style.display = "none";
 
         // State and postcode validation
-        f.state.addEventListener(
-            "input", updateUtilities
-        );
-        f.state.addEventListener(
-            "change", updateUtilities
-        );
+        f.state.addEventListener("input", updateUtilities);
+        f.state.addEventListener("change", updateUtilities);
 
-        f.postcode.addEventListener(
-            "input", updateUtilities
-        );
-        f.postcode.addEventListener(
-            "change", updateUtilities
-        );
+        f.postcode.addEventListener("input", updateUtilities);
+        f.postcode.addEventListener("change", updateUtilities);
 
         // Product selection
         f.health.addEventListener("change", function () {
