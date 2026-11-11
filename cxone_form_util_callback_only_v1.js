@@ -227,24 +227,18 @@
 
         f.ovcLive.checked = false;
         f.ovcCallback.checked = false;
-
-        f.utilitiesLive.checked = false;
+		
         f.utilitiesCallback.checked = false;
 
         switch (combination) {
 
             case "OVC_UTILITIES":
                 f.ovcCallback.checked = true;
-                f.utilitiesLive.checked = true;
                 break;
 
             case "HEALTH_UTILITIES":
                 f.healthLive.checked = true;
                 f.utilitiesCallback.checked = true;
-                break;
-
-            case "UTILITIES":
-                f.utilitiesLive.checked = true;
                 break;
 
             case "OVC":
@@ -274,7 +268,6 @@
             !f.ovcLive ||
             !f.ovcCallback ||
             !f.utilitiesDelivery ||
-            !f.utilitiesLive ||
             !f.utilitiesCallback ||
             !f.ovcDateGroup ||
             !f.utilitiesDateGroup
@@ -423,10 +416,6 @@
         updateCallbackVisibility();
     }
 
-    function selectUtilitiesLive() {
-        updateCallbackVisibility();
-    }
-
     function selectUtilitiesCallback() {
         updateCallbackVisibility();
     }
@@ -452,7 +441,6 @@
             !f.ovcDateGroup ||
             !f.ovcDate ||
             !f.utilitiesDelivery ||
-            !f.utilitiesLive ||
             !f.utilitiesCallback ||
             !f.utilitiesDateGroup ||
             !f.utilitiesDate
