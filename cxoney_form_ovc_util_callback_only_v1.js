@@ -3,7 +3,7 @@
     "use strict";
 
     // ========================================================
-    // CONFIGURATION
+    // NICE CXone - OVC + Utilities Callback Only
     // ========================================================
 
     var JSON_URL =
@@ -14,10 +14,9 @@
     var approvedPostcodes = [];
     var postcodesLoaded = false;
     var initialised = false;
-    var previousCombination = null;
 
     // ========================================================
-    // FORM FIELDS
+    // FIELD REFERENCES
     // ========================================================
 
     function getFields() {
@@ -69,24 +68,18 @@
     // ========================================================
 
     function normaliseState(value) {
-        var state = String(value || "").trim().toUpperCase();
+        var state = String(value || "")
+            .trim()
+            .toUpperCase();
 
         var map = {
-            "NSW": "NSW",
             "NEW SOUTH WALES": "NSW",
-            "ACT": "ACT",
             "AUSTRALIAN CAPITAL TERRITORY": "ACT",
-            "QLD": "QLD",
             "QUEENSLAND": "QLD",
-            "SA": "SA",
             "SOUTH AUSTRALIA": "SA",
-            "VIC": "VIC",
             "VICTORIA": "VIC",
-            "NT": "NT",
             "NORTHERN TERRITORY": "NT",
-            "TAS": "TAS",
             "TASMANIA": "TAS",
-            "WA": "WA",
             "WESTERN AUSTRALIA": "WA"
         };
 
@@ -98,7 +91,9 @@
     // ========================================================
 
     function clearCallbackDate(field) {
-        if (!field) return;
+        if (!field) {
+            return;
+        }
 
         if (field._flatpickr) {
             field._flatpickr.clear();
@@ -121,8 +116,7 @@
 
         var showUtilities =
             f.utilities.checked &&
-            !f.utilities.disabled &&
-            f.utilitiesCallback.checked;
+            !f.utilities.disabled;
 
         f.utilitiesDateGroup.style.display =
             showUtilities ? "block" : "none";
@@ -133,109 +127,54 @@
     }
 
     // ========================================================
-    // PRODUCT COMBINATION
-    // ========================================================
-
-    function getCombination(f) {
-        var utilitiesSelected =
-            f.utilities.checked && !f.utilities.disabled;
-
-        if (f.ovc.checked && utilitiesSelected) {
-            return "OVC_UTILITIES";
-        }
-
-        if (f.health.checked && utilitiesSelected) {
-            return "HEALTH_UTILITIES";
-        }
-
-        if (f.ovc.checked) return "OVC";
-        if (utilitiesSelected) return "UTILITIES";
-        if (f.health.checked) return "HEALTH";
-
-        return "NONE";
-    }
-
-    // ========================================================
-    // DEFAULT DELIVERY SELECTIONS
-    // ========================================================
-
-    function applyDefaults(f, combination) {
-        f.healthLive.checked = false;
-        f.ovcCallback.checked = false;
-        f.utilitiesLive.checked = false;
-        f.utilitiesCallback.checked = false;
-
-        switch (combination) {
-
-            case "OVC_UTILITIES":
-                f.ovcCallback.checked = true;
-                f.utilitiesLive.checked = true;
-                break;
-
-            case "HEALTH_UTILITIES":
-                f.healthLive.checked = true;
-                f.utilitiesCallback.checked = true;
-                break;
-
-            case "UTILITIES":
-                f.utilitiesLive.checked = true;
-                break;
-
-            case "OVC":
-                f.ovcCallback.checked = true;
-                break;
-
-            case "HEALTH":
-            case "NONE":
-                break;
-        }
-    }
-
-    // ========================================================
-    // DELIVERY CONTROLS
+    // DELIVERY SELECTIONS
     // ========================================================
 
     function refreshDelivery() {
         var f = getFields();
-        var combination = getCombination(f);
 
-        if (combination !== previousCombination) {
-            applyDefaults(f, combination);
-            previousCombination = combination;
-        }
+        var ovcSelected = f.ovc.checked;
 
-        // Health delivery only for Health + Utilities
-        f.healthDelivery.style.display =
-            combination === "HEALTH_UTILITIES"
-                ? "block"
-                : "none";
-
-        f.healthLive.checked =
-            combination === "HEALTH_UTILITIES";
-
-        // OVC always uses Callback
-        f.ovcDelivery.style.display =
-            f.ovc.checked ? "block" : "none";
-
-        f.ovcCallback.checked = f.ovc.checked;
-
-        // Utilities delivery
         var utilitiesSelected =
-            f.utilities.checked && !f.utilities.disabled;
+            f.utilities.checked &&
+            !f.utilities.disabled;
 
+        var healthUtilities =
+            f.health.checked &&
+            utilitiesSelected;
+
+        // Health Live Transfer is available
+        // only for Health + Utilities.
+        f.healthDelivery.style.display =
+            healthUtilities ? "block" : "none";
+
+        f.healthLive.checked = healthUtilities;
+
+        // OVC: Callback only.
+        f.ovcDelivery.style.display =
+            ovcSelected ? "block" : "none";
+
+        f.ovcCallback.checked = ovcSelected;
+
+        // Utilities: Callback only.
         f.utilitiesDelivery.style.display =
             utilitiesSelected ? "block" : "none";
 
+        f.utilitiesCallback.checked =
+            utilitiesSelected;
+
+        // Display callback calendars.
         updateCallbackVisibility();
 
-        console.log(
-            "Current product combination:",
-            combination
-        );
+        console.log("Delivery selection:", {
+            healthLiveTransfer: healthUtilities,
+            ovcCallback: ovcSelected,
+            utilitiesCallback: utilitiesSelected
+        });
     }
 
     // ========================================================
-    // UTILITIES ELIGIBILITY
+    // UTILITIES POSTCODE ELIGIBILITY
     // ========================================================
 
     function postcodeIsApproved(postcode) {
@@ -246,7 +185,10 @@
         var f = getFields();
 
         var state = normaliseState(f.state.value);
-        var postcode = String(f.postcode.value || "").trim();
+
+        var postcode = String(
+            f.postcode.value || ""
+        ).trim();
 
         var stateAllowed =
             ALLOWED_STATES.indexOf(state) !== -1;
@@ -272,12 +214,17 @@
         });
     }
 
+    // ========================================================
+    // LOAD POSTCODES
+    // ========================================================
+
     function loadPostcodes() {
         fetch(JSON_URL)
             .then(function (response) {
                 if (!response.ok) {
                     throw new Error(
-                        "Postcode JSON HTTP " + response.status
+                        "Postcode JSON HTTP " +
+                        response.status
                     );
                 }
 
@@ -286,21 +233,34 @@
             .then(function (data) {
                 if (!Array.isArray(data)) {
                     throw new Error(
-                        "utilities-postcodes.json must contain an array"
+                        "Postcode JSON must be an array"
                     );
                 }
 
-                approvedPostcodes = data.map(function (value) {
-                    return String(value).trim();
-                });
+                approvedPostcodes = data.map(
+                    function (value) {
+                        return String(value).trim();
+                    }
+                );
 
                 postcodesLoaded = true;
+
+                console.log(
+                    "Approved postcodes loaded:",
+                    approvedPostcodes.length
+                );
+
                 updateUtilities();
             })
             .catch(function (error) {
-                console.error("Postcode loading error:", error);
+                console.error(
+                    "Postcode loading error:",
+                    error
+                );
+
                 approvedPostcodes = [];
                 postcodesLoaded = false;
+
                 updateUtilities();
             });
     }
@@ -312,15 +272,22 @@
     function updateProductSelection(changedCheckbox) {
         var f = getFields();
 
-        // Health and OVC are mutually exclusive
-        if (changedCheckbox === f.health && f.health.checked) {
+        // Health and OVC are mutually exclusive.
+        if (
+            changedCheckbox === f.health &&
+            f.health.checked
+        ) {
             f.ovc.checked = false;
         }
 
-        if (changedCheckbox === f.ovc && f.ovc.checked) {
+        if (
+            changedCheckbox === f.ovc &&
+            f.ovc.checked
+        ) {
             f.health.checked = false;
         }
 
+        // Utilities is independent.
         refreshDelivery();
     }
 
@@ -344,7 +311,6 @@
             f.ovcDateGroup,
             f.ovcDate,
             f.utilitiesDelivery,
-            f.utilitiesLive,
             f.utilitiesCallback,
             f.utilitiesDateGroup,
             f.utilitiesDate
@@ -357,58 +323,77 @@
             return;
         }
 
-        if (initialised) return;
+        if (initialised) {
+            return;
+        }
+
         initialised = true;
 
+        // Initial product state.
         f.health.checked = true;
         f.ovc.checked = false;
+
         f.utilities.checked = false;
         f.utilities.disabled = true;
 
+        // Initial delivery state.
         f.healthLive.checked = false;
         f.ovcCallback.checked = false;
-        f.utilitiesLive.checked = false;
         f.utilitiesCallback.checked = false;
 
-        f.state.addEventListener("input", updateUtilities);
-        f.state.addEventListener("change", updateUtilities);
+        // State and postcode listeners.
+        f.state.addEventListener(
+            "input", updateUtilities
+        );
 
-        f.postcode.addEventListener("input", updateUtilities);
-        f.postcode.addEventListener("change", updateUtilities);
+        f.state.addEventListener(
+            "change", updateUtilities
+        );
 
-        f.health.addEventListener("change", function () {
-            updateProductSelection(f.health);
-        });
+        f.postcode.addEventListener(
+            "input", updateUtilities
+        );
 
-        f.ovc.addEventListener("change", function () {
-            updateProductSelection(f.ovc);
-        });
+        f.postcode.addEventListener(
+            "change", updateUtilities
+        );
+
+        // Product selection listeners.
+        f.health.addEventListener(
+            "change",
+            function () {
+                updateProductSelection(f.health);
+            }
+        );
+
+        f.ovc.addEventListener(
+            "change",
+            function () {
+                updateProductSelection(f.ovc);
+            }
+        );
 
         f.utilities.addEventListener(
             "change", refreshDelivery
         );
 
-        // OVC Callback cannot be deselected
-        // while OVC is selected.
-        f.ovcCallback.addEventListener("change", function () {
-            f.ovcCallback.checked = f.ovc.checked;
-            updateCallbackVisibility();
-        });
-
-        f.utilitiesLive.addEventListener(
-            "change", updateCallbackVisibility
+        // Callback selections cannot be removed
+        // while their products are selected.
+        f.ovcCallback.addEventListener(
+            "change", refreshDelivery
         );
 
         f.utilitiesCallback.addEventListener(
-            "change", updateCallbackVisibility
+            "change", refreshDelivery
         );
 
+        // Initial display and eligibility.
         refreshDelivery();
         updateUtilities();
         loadPostcodes();
 
         console.log(
-            "CXone Callback-only OVC form initialised"
+            "CXone OVC + Utilities Callback-only form initialised"
         );
     }
 
