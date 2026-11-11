@@ -52,9 +52,6 @@
             utilitiesDelivery: document.getElementById(
                 "utilities_delivery_group"
             ),
-            utilitiesLive: document.getElementById(
-                "utilities_live_transfer"
-            ),
             utilitiesCallback: document.getElementById(
                 "utilities_callback"
             ),
