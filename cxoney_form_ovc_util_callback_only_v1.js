@@ -3,7 +3,7 @@
     "use strict";
 
     // ========================================================
-    // NICE CXone - OVC + Utilities Callback Only
+    // NICE CXone - OVC and Utilities Callback Only
     // ========================================================
 
     var JSON_URL =
@@ -28,38 +28,20 @@
             ovc: document.getElementById("product_ovc"),
             utilities: document.getElementById("product_utilities"),
 
-            healthDelivery: document.getElementById(
-                "health_delivery_group"
-            ),
-            healthLive: document.getElementById(
-                "health_live_transfer"
-            ),
+            healthDelivery: document.getElementById("health_delivery_group"),
+            healthLive: document.getElementById("health_live_transfer"),
 
-            ovcDelivery: document.getElementById(
-                "ovc_delivery_group"
-            ),
-            ovcCallback: document.getElementById(
-                "ovc_callback"
-            ),
-            ovcDateGroup: document.getElementById(
-                "callback_datetime_ovc_group"
-            ),
-            ovcDate: document.getElementById(
-                "callback_datetime_ovc"
-            ),
+            ovcDelivery: document.getElementById("ovc_delivery_group"),
+            ovcLive: document.getElementById("ovc_live_transfer"),
+            ovcCallback: document.getElementById("ovc_callback"),
+            ovcDateGroup: document.getElementById("callback_datetime_ovc_group"),
+            ovcDate: document.getElementById("callback_datetime_ovc"),
 
-            utilitiesDelivery: document.getElementById(
-                "utilities_delivery_group"
-            ),
-            utilitiesCallback: document.getElementById(
-                "utilities_callback"
-            ),
-            utilitiesDateGroup: document.getElementById(
-                "callback_datetime_utilities_group"
-            ),
-            utilitiesDate: document.getElementById(
-                "callback_datetime_utilities"
-            )
+            utilitiesDelivery: document.getElementById("utilities_delivery_group"),
+            utilitiesLive: document.getElementById("utilities_live_transfer"),
+            utilitiesCallback: document.getElementById("utilities_callback"),
+            utilitiesDateGroup: document.getElementById("callback_datetime_utilities_group"),
+            utilitiesDate: document.getElementById("callback_datetime_utilities")
         };
     }
 
@@ -68,9 +50,7 @@
     // ========================================================
 
     function normaliseState(value) {
-        var state = String(value || "")
-            .trim()
-            .toUpperCase();
+        var state = String(value || "").trim().toUpperCase();
 
         var map = {
             "NEW SOUTH WALES": "NSW",
@@ -91,38 +71,12 @@
     // ========================================================
 
     function clearCallbackDate(field) {
-        if (!field) {
-            return;
-        }
+        if (!field) return;
 
         if (field._flatpickr) {
             field._flatpickr.clear();
         } else {
             field.value = "";
-        }
-    }
-
-    function updateCallbackVisibility() {
-        var f = getFields();
-
-        var showOVC = f.ovc.checked;
-
-        f.ovcDateGroup.style.display =
-            showOVC ? "block" : "none";
-
-        if (!showOVC) {
-            clearCallbackDate(f.ovcDate);
-        }
-
-        var showUtilities =
-            f.utilities.checked &&
-            !f.utilities.disabled;
-
-        f.utilitiesDateGroup.style.display =
-            showUtilities ? "block" : "none";
-
-        if (!showUtilities) {
-            clearCallbackDate(f.utilitiesDate);
         }
     }
 
@@ -133,40 +87,89 @@
     function refreshDelivery() {
         var f = getFields();
 
-        var ovcSelected = f.ovc.checked;
+        var ovcSelected = f.ovc && f.ovc.checked;
 
         var utilitiesSelected =
+            f.utilities &&
             f.utilities.checked &&
             !f.utilities.disabled;
 
         var healthUtilities =
+            f.health &&
             f.health.checked &&
             utilitiesSelected;
 
-        // Health Live Transfer is available
-        // only for Health + Utilities.
-        f.healthDelivery.style.display =
-            healthUtilities ? "block" : "none";
+        // Health + Utilities: Health Live Transfer.
+        if (f.healthDelivery) {
+            f.healthDelivery.style.display =
+                healthUtilities ? "block" : "none";
+        }
 
-        f.healthLive.checked = healthUtilities;
+        if (f.healthLive) {
+            f.healthLive.checked = healthUtilities;
+        }
 
         // OVC: Callback only.
-        f.ovcDelivery.style.display =
-            ovcSelected ? "block" : "none";
+        if (f.ovcDelivery) {
+            f.ovcDelivery.style.display =
+                ovcSelected ? "block" : "none";
+        }
 
-        f.ovcCallback.checked = ovcSelected;
+        if (f.ovcLive) {
+            f.ovcLive.checked = false;
+            var ovcLiveLabel = f.ovcLive.closest("label");
+            if (ovcLiveLabel) {
+                ovcLiveLabel.style.display = "none";
+            } else {
+                f.ovcLive.style.display = "none";
+            }
+        }
+
+        if (f.ovcCallback) {
+            f.ovcCallback.checked = ovcSelected;
+        }
+
+        if (f.ovcDateGroup) {
+            f.ovcDateGroup.style.display =
+                ovcSelected ? "block" : "none";
+        }
+
+        if (!ovcSelected) {
+            clearCallbackDate(f.ovcDate);
+        }
 
         // Utilities: Callback only.
-        f.utilitiesDelivery.style.display =
-            utilitiesSelected ? "block" : "none";
+        if (f.utilitiesDelivery) {
+            f.utilitiesDelivery.style.display =
+                utilitiesSelected ? "block" : "none";
+        }
 
-        f.utilitiesCallback.checked =
-            utilitiesSelected;
+        if (f.utilitiesLive) {
+            f.utilitiesLive.checked = false;
+            var utilitiesLiveLabel =
+                f.utilitiesLive.closest("label");
 
-        // Display callback calendars.
-        updateCallbackVisibility();
+            if (utilitiesLiveLabel) {
+                utilitiesLiveLabel.style.display = "none";
+            } else {
+                f.utilitiesLive.style.display = "none";
+            }
+        }
 
-        console.log("Delivery selection:", {
+        if (f.utilitiesCallback) {
+            f.utilitiesCallback.checked = utilitiesSelected;
+        }
+
+        if (f.utilitiesDateGroup) {
+            f.utilitiesDateGroup.style.display =
+                utilitiesSelected ? "block" : "none";
+        }
+
+        if (!utilitiesSelected) {
+            clearCallbackDate(f.utilitiesDate);
+        }
+
+        console.log("CXone delivery selection:", {
             healthLiveTransfer: healthUtilities,
             ovcCallback: ovcSelected,
             utilitiesCallback: utilitiesSelected
@@ -174,30 +177,24 @@
     }
 
     // ========================================================
-    // UTILITIES POSTCODE ELIGIBILITY
+    // UTILITIES ELIGIBILITY
     // ========================================================
-
-    function postcodeIsApproved(postcode) {
-        return approvedPostcodes.indexOf(postcode) !== -1;
-    }
 
     function updateUtilities() {
         var f = getFields();
 
+        if (!f.state || !f.postcode || !f.utilities) {
+            return;
+        }
+
         var state = normaliseState(f.state.value);
-
-        var postcode = String(
-            f.postcode.value || ""
-        ).trim();
-
-        var stateAllowed =
-            ALLOWED_STATES.indexOf(state) !== -1;
+        var postcode = String(f.postcode.value || "").trim();
 
         var eligible =
-            stateAllowed &&
+            ALLOWED_STATES.indexOf(state) !== -1 &&
             postcodesLoaded &&
             /^[0-9]{4}$/.test(postcode) &&
-            postcodeIsApproved(postcode);
+            approvedPostcodes.indexOf(postcode) !== -1;
 
         f.utilities.disabled = !eligible;
 
@@ -223,44 +220,27 @@
             .then(function (response) {
                 if (!response.ok) {
                     throw new Error(
-                        "Postcode JSON HTTP " +
-                        response.status
+                        "Postcode JSON HTTP " + response.status
                     );
                 }
-
                 return response.json();
             })
             .then(function (data) {
                 if (!Array.isArray(data)) {
-                    throw new Error(
-                        "Postcode JSON must be an array"
-                    );
+                    throw new Error("Postcode JSON must be an array");
                 }
 
-                approvedPostcodes = data.map(
-                    function (value) {
-                        return String(value).trim();
-                    }
-                );
+                approvedPostcodes = data.map(function (value) {
+                    return String(value).trim();
+                });
 
                 postcodesLoaded = true;
-
-                console.log(
-                    "Approved postcodes loaded:",
-                    approvedPostcodes.length
-                );
-
                 updateUtilities();
             })
             .catch(function (error) {
-                console.error(
-                    "Postcode loading error:",
-                    error
-                );
-
+                console.error("Postcode loading error:", error);
                 approvedPostcodes = [];
                 postcodesLoaded = false;
-
                 updateUtilities();
             });
     }
@@ -269,25 +249,25 @@
     // PRODUCT SELECTION
     // ========================================================
 
-    function updateProductSelection(changedCheckbox) {
+    function productChanged(changedCheckbox) {
         var f = getFields();
 
-        // Health and OVC are mutually exclusive.
         if (
             changedCheckbox === f.health &&
-            f.health.checked
+            f.health.checked &&
+            f.ovc
         ) {
             f.ovc.checked = false;
         }
 
         if (
             changedCheckbox === f.ovc &&
-            f.ovc.checked
+            f.ovc.checked &&
+            f.health
         ) {
             f.health.checked = false;
         }
 
-        // Utilities is independent.
         refreshDelivery();
     }
 
@@ -298,102 +278,96 @@
     function initialise() {
         var f = getFields();
 
-        var required = [
-            f.state,
-            f.postcode,
-            f.health,
-            f.ovc,
-            f.utilities,
-            f.healthDelivery,
-            f.healthLive,
-            f.ovcDelivery,
-            f.ovcCallback,
-            f.ovcDateGroup,
-            f.ovcDate,
-            f.utilitiesDelivery,
-            f.utilitiesCallback,
-            f.utilitiesDateGroup,
-            f.utilitiesDate
-        ];
-
-        if (required.some(function (field) {
-            return !field;
-        })) {
+        // Only core product checkboxes are mandatory.
+        if (!f.health || !f.ovc || !f.utilities) {
+            console.warn(
+                "CXone: Waiting for product checkboxes"
+            );
             setTimeout(initialise, 500);
             return;
         }
 
-        if (initialised) {
-            return;
-        }
-
+        if (initialised) return;
         initialised = true;
 
-        // Initial product state.
         f.health.checked = true;
         f.ovc.checked = false;
-
         f.utilities.checked = false;
         f.utilities.disabled = true;
 
-        // Initial delivery state.
-        f.healthLive.checked = false;
-        f.ovcCallback.checked = false;
-        f.utilitiesCallback.checked = false;
+        // Product listeners.
+        f.health.addEventListener("change", function () {
+            productChanged(f.health);
+        });
 
-        // State and postcode listeners.
-        f.state.addEventListener(
-            "input", updateUtilities
-        );
-
-        f.state.addEventListener(
-            "change", updateUtilities
-        );
-
-        f.postcode.addEventListener(
-            "input", updateUtilities
-        );
-
-        f.postcode.addEventListener(
-            "change", updateUtilities
-        );
-
-        // Product selection listeners.
-        f.health.addEventListener(
-            "change",
-            function () {
-                updateProductSelection(f.health);
-            }
-        );
-
-        f.ovc.addEventListener(
-            "change",
-            function () {
-                updateProductSelection(f.ovc);
-            }
-        );
+        f.ovc.addEventListener("change", function () {
+            productChanged(f.ovc);
+        });
 
         f.utilities.addEventListener(
             "change", refreshDelivery
         );
 
-        // Callback selections cannot be removed
-        // while their products are selected.
-        f.ovcCallback.addEventListener(
-            "change", refreshDelivery
-        );
+        // Prevent Callback-only options from being
+        // deselected while the product is selected.
+        if (f.ovcCallback) {
+            f.ovcCallback.addEventListener(
+                "change", refreshDelivery
+            );
+        }
 
-        f.utilitiesCallback.addEventListener(
-            "change", refreshDelivery
-        );
+        if (f.utilitiesCallback) {
+            f.utilitiesCallback.addEventListener(
+                "change", refreshDelivery
+            );
+        }
 
-        // Initial display and eligibility.
+        // Postcode validation listeners.
+        if (f.state && f.postcode) {
+            f.state.addEventListener(
+                "input", updateUtilities
+            );
+            f.state.addEventListener(
+                "change", updateUtilities
+            );
+
+            f.postcode.addEventListener(
+                "input", updateUtilities
+            );
+            f.postcode.addEventListener(
+                "change", updateUtilities
+            );
+
+            loadPostcodes();
+        } else {
+            console.error(
+                "CXone: State or postcode field missing"
+            );
+        }
+
+        // Report missing callback fields.
+        [
+            "ovc_delivery_group",
+            "ovc_callback",
+            "callback_datetime_ovc_group",
+            "callback_datetime_ovc",
+            "utilities_delivery_group",
+            "utilities_callback",
+            "callback_datetime_utilities_group",
+            "callback_datetime_utilities"
+        ].forEach(function (id) {
+            if (!document.getElementById(id)) {
+                console.error(
+                    "CXone missing HTML element:", id
+                );
+            }
+        });
+
         refreshDelivery();
         updateUtilities();
-        loadPostcodes();
 
         console.log(
-            "CXone OVC + Utilities Callback-only form initialised"
+            "CXone OVC + Utilities Callback-only initialised"
         );
     }
 
