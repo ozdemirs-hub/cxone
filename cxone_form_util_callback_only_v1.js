@@ -506,11 +506,6 @@
             "change", selectOVCCallback
         );
 
-        // Utilities delivery events.
-        f.utilitiesLive.addEventListener(
-            "change", selectUtilitiesLive
-        );
-
         f.utilitiesCallback.addEventListener(
             "change", selectUtilitiesCallback
         );
