@@ -42,9 +42,7 @@
     function studioBoolean(id) {
         var element = document.getElementById(id);
 
-        if (!element) {
-            return false;
-        }
+        if (!element) return false;
 
         var value = String(element.value || "")
             .trim()
@@ -101,12 +99,8 @@
         if (f.ovcLive) {
             f.ovcLive.disabled = !ovcEnabled;
 
-            if (!ovcEnabled && f.ovcLive.checked) {
+            if (!ovcEnabled) {
                 f.ovcLive.checked = false;
-
-                if (f.ovcCallback) {
-                    f.ovcCallback.checked = true;
-                }
             }
         }
 
@@ -118,12 +112,8 @@
         if (f.utilitiesLive) {
             f.utilitiesLive.disabled = !utilitiesEnabled;
 
-            if (!utilitiesEnabled && f.utilitiesLive.checked) {
+            if (!utilitiesEnabled) {
                 f.utilitiesLive.checked = false;
-
-                if (f.utilitiesCallback) {
-                    f.utilitiesCallback.checked = true;
-                }
             }
         }
 
@@ -131,6 +121,33 @@
             ovcLiveTransfer: ovcEnabled,
             utilLiveTransfer: utilitiesEnabled
         });
+    }
+
+    function setDeliveryDefault(product) {
+        var f = getFields();
+
+        if (product === "ovc") {
+            if (f.ovcCallback) {
+                f.ovcCallback.checked = true;
+            }
+        }
+
+        if (product === "utilities") {
+            var ovcSelected =
+                !!(f.ovc && f.ovc.checked);
+
+            var utilitiesLiveAvailable =
+                !!(f.utilitiesLive &&
+                   !f.utilitiesLive.disabled);
+
+            // OVC + Utilities:
+            // Utilities defaults to Live Transfer if available.
+            if (ovcSelected && utilitiesLiveAvailable) {
+                f.utilitiesLive.checked = true;
+            } else if (f.utilitiesCallback) {
+                f.utilitiesCallback.checked = true;
+            }
+        }
     }
 
     function refreshDelivery() {
@@ -248,19 +265,20 @@
             /^[0-9]{4}$/.test(postcode) &&
             approvedPostcodes.indexOf(postcode) !== -1;
 
+        var wasSelected = f.utilities.checked;
+
         f.utilities.disabled = !eligible;
 
         if (!eligible) {
             f.utilities.checked = false;
         }
 
-        refreshDelivery();
+        // Preserve selection if eligibility remains valid.
+        if (eligible && wasSelected) {
+            f.utilities.checked = true;
+        }
 
-        console.log("Utilities eligibility:", {
-            state: state,
-            postcode: postcode,
-            eligible: eligible
-        });
+        refreshDelivery();
     }
 
     function loadPostcodes() {
@@ -317,6 +335,15 @@
             f.health.checked = false;
         }
 
+        // Apply defaults only when products change.
+        if (f.ovc && f.ovc.checked) {
+            setDeliveryDefault("ovc");
+        }
+
+        if (f.utilities && f.utilities.checked) {
+            setDeliveryDefault("utilities");
+        }
+
         refreshDelivery();
     }
 
@@ -331,23 +358,20 @@
             !f.state ||
             !f.postcode) {
 
-            console.warn(
-                "CXone: Waiting for form elements"
-            );
-
+            console.warn("CXone: Waiting for form elements");
             setTimeout(initialise, 500);
             return;
         }
 
         initialised = true;
 
-        // Initial product selection
         f.health.checked = true;
         f.ovc.checked = false;
         f.utilities.checked = false;
         f.utilities.disabled = true;
 
-        // Default delivery selections
+        updateLiveTransferAvailability();
+
         if (f.ovcCallback) {
             f.ovcCallback.checked = true;
         }
@@ -356,10 +380,6 @@
             f.utilitiesCallback.checked = true;
         }
 
-        // Read Studio configuration
-        updateLiveTransferAvailability();
-
-        // Product listeners
         f.health.addEventListener("change", function () {
             productChanged(f.health);
         });
@@ -368,67 +388,33 @@
             productChanged(f.ovc);
         });
 
-        f.utilities.addEventListener(
-            "change",
-            refreshDelivery
-        );
+        f.utilities.addEventListener("change", function () {
+            productChanged(f.utilities);
+        });
 
-        // OVC delivery listeners
         if (f.ovcLive) {
-            f.ovcLive.addEventListener(
-                "change",
-                refreshDelivery
-            );
+            f.ovcLive.addEventListener("change", refreshDelivery);
         }
 
         if (f.ovcCallback) {
-            f.ovcCallback.addEventListener(
-                "change",
-                refreshDelivery
-            );
+            f.ovcCallback.addEventListener("change", refreshDelivery);
         }
 
-        // Utilities delivery listeners
         if (f.utilitiesLive) {
-            f.utilitiesLive.addEventListener(
-                "change",
-                refreshDelivery
-            );
+            f.utilitiesLive.addEventListener("change", refreshDelivery);
         }
 
         if (f.utilitiesCallback) {
-            f.utilitiesCallback.addEventListener(
-                "change",
-                refreshDelivery
-            );
+            f.utilitiesCallback.addEventListener("change", refreshDelivery);
         }
 
-        // State/postcode listeners
-        f.state.addEventListener(
-            "input",
-            updateUtilities
-        );
+        f.state.addEventListener("input", updateUtilities);
+        f.state.addEventListener("change", updateUtilities);
+        f.postcode.addEventListener("input", updateUtilities);
+        f.postcode.addEventListener("change", updateUtilities);
 
-        f.state.addEventListener(
-            "change",
-            updateUtilities
-        );
-
-        f.postcode.addEventListener(
-            "input",
-            updateUtilities
-        );
-
-        f.postcode.addEventListener(
-            "change",
-            updateUtilities
-        );
-
-        // Initial visibility
         refreshDelivery();
         updateUtilities();
-
-        // Load approved postcode list
         loadPostcodes();
 
         console.log(
