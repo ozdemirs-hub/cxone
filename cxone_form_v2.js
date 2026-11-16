@@ -41,7 +41,6 @@
 
     function studioBoolean(id) {
         var element = document.getElementById(id);
-
         if (!element) return false;
 
         var value = String(element.value || "")
@@ -127,22 +126,20 @@
         var f = getFields();
 
         if (product === "ovc") {
+            // OVC always defaults to Callback.
             if (f.ovcCallback) {
                 f.ovcCallback.checked = true;
             }
         }
 
         if (product === "utilities") {
-            var ovcSelected =
-                !!(f.ovc && f.ovc.checked);
-
+            // Utilities defaults to Live Transfer if enabled,
+            // regardless of other selected products.
             var utilitiesLiveAvailable =
                 !!(f.utilitiesLive &&
                    !f.utilitiesLive.disabled);
 
-            // OVC + Utilities:
-            // Utilities defaults to Live Transfer if available.
-            if (ovcSelected && utilitiesLiveAvailable) {
+            if (utilitiesLiveAvailable) {
                 f.utilitiesLive.checked = true;
             } else if (f.utilitiesCallback) {
                 f.utilitiesCallback.checked = true;
@@ -265,17 +262,10 @@
             /^[0-9]{4}$/.test(postcode) &&
             approvedPostcodes.indexOf(postcode) !== -1;
 
-        var wasSelected = f.utilities.checked;
-
         f.utilities.disabled = !eligible;
 
         if (!eligible) {
             f.utilities.checked = false;
-        }
-
-        // Preserve selection if eligibility remains valid.
-        if (eligible && wasSelected) {
-            f.utilities.checked = true;
         }
 
         refreshDelivery();
@@ -335,7 +325,7 @@
             f.health.checked = false;
         }
 
-        // Apply defaults only when products change.
+        // Apply defaults when products are selected.
         if (f.ovc && f.ovc.checked) {
             setDeliveryDefault("ovc");
         }
