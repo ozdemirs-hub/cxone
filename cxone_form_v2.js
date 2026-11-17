@@ -90,16 +90,33 @@
             "config_util_live_transfer"
         );
 
+        var ovcSelected =
+            !!(f.ovc && f.ovc.checked);
+
+        var utilitiesSelected =
+            !!(f.utilities &&
+               f.utilities.checked &&
+               !f.utilities.disabled);
+
+        // OVC Live Transfer is not available
+        // when OVC + Utilities are selected.
+        var allowOvcLive =
+            ovcEnabled && !(ovcSelected && utilitiesSelected);
+
         if (f.ovcLiveOption) {
             f.ovcLiveOption.style.display =
-                ovcEnabled ? "block" : "none";
+                allowOvcLive ? "block" : "none";
         }
 
         if (f.ovcLive) {
-            f.ovcLive.disabled = !ovcEnabled;
+            f.ovcLive.disabled = !allowOvcLive;
 
-            if (!ovcEnabled) {
+            if (!allowOvcLive && f.ovcLive.checked) {
                 f.ovcLive.checked = false;
+
+                if (f.ovcCallback) {
+                    f.ovcCallback.checked = true;
+                }
             }
         }
 
@@ -111,14 +128,20 @@
         if (f.utilitiesLive) {
             f.utilitiesLive.disabled = !utilitiesEnabled;
 
-            if (!utilitiesEnabled) {
+            if (!utilitiesEnabled && f.utilitiesLive.checked) {
                 f.utilitiesLive.checked = false;
+
+                if (f.utilitiesCallback) {
+                    f.utilitiesCallback.checked = true;
+                }
             }
         }
 
         console.log("CXone Live Transfer configuration:", {
-            ovcLiveTransfer: ovcEnabled,
-            utilLiveTransfer: utilitiesEnabled
+            ovcLiveTransfer: allowOvcLive,
+            utilLiveTransfer: utilitiesEnabled,
+            ovcUtilitiesCombination:
+                ovcSelected && utilitiesSelected
         });
     }
 
@@ -126,7 +149,6 @@
         var f = getFields();
 
         if (product === "ovc") {
-            // OVC always defaults to Callback.
             if (f.ovcCallback) {
                 f.ovcCallback.checked = true;
             }
@@ -140,21 +162,17 @@
                 !!(f.utilitiesLive &&
                    !f.utilitiesLive.disabled);
 
-            // Health + Utilities:
-            // Utilities defaults to Callback.
             if (healthSelected) {
+                // Health + Utilities:
+                // Utilities defaults to Callback.
                 if (f.utilitiesCallback) {
                     f.utilitiesCallback.checked = true;
                 }
-            }
-            // Utilities only or OVC + Utilities:
-            // Default to Live Transfer if available.
-            else if (utilitiesLiveAvailable) {
+            } else if (utilitiesLiveAvailable) {
+                // Utilities only or OVC + Utilities:
+                // Utilities defaults to Live Transfer.
                 f.utilitiesLive.checked = true;
-            }
-            // Live Transfer unavailable:
-            // Fall back to Callback.
-            else if (f.utilitiesCallback) {
+            } else if (f.utilitiesCallback) {
                 f.utilitiesCallback.checked = true;
             }
         }
@@ -176,6 +194,9 @@
 
         var healthUtilities =
             healthSelected && utilitiesSelected;
+
+        // Refresh visibility whenever products change.
+        updateLiveTransferAvailability();
 
         // Health delivery
         if (f.healthDelivery) {
@@ -338,7 +359,9 @@
             f.health.checked = false;
         }
 
-        // Apply defaults when product combination changes.
+        // Update Live Transfer visibility first.
+        updateLiveTransferAvailability();
+
         if (f.ovc && f.ovc.checked) {
             setDeliveryDefault("ovc");
         }
