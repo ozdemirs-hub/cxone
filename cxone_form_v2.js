@@ -133,15 +133,28 @@
         }
 
         if (product === "utilities") {
-            // Utilities defaults to Live Transfer if enabled,
-            // regardless of other selected products.
+            var healthSelected =
+                !!(f.health && f.health.checked);
+
             var utilitiesLiveAvailable =
                 !!(f.utilitiesLive &&
                    !f.utilitiesLive.disabled);
 
-            if (utilitiesLiveAvailable) {
+            // Health + Utilities:
+            // Utilities defaults to Callback.
+            if (healthSelected) {
+                if (f.utilitiesCallback) {
+                    f.utilitiesCallback.checked = true;
+                }
+            }
+            // Utilities only or OVC + Utilities:
+            // Default to Live Transfer if available.
+            else if (utilitiesLiveAvailable) {
                 f.utilitiesLive.checked = true;
-            } else if (f.utilitiesCallback) {
+            }
+            // Live Transfer unavailable:
+            // Fall back to Callback.
+            else if (f.utilitiesCallback) {
                 f.utilitiesCallback.checked = true;
             }
         }
@@ -325,7 +338,7 @@
             f.health.checked = false;
         }
 
-        // Apply defaults when products are selected.
+        // Apply defaults when product combination changes.
         if (f.ovc && f.ovc.checked) {
             setDeliveryDefault("ovc");
         }
