@@ -10,6 +10,7 @@
     var approvedPostcodes = [];
     var postcodesLoaded = false;
     var initialised = false;
+    var submitButton = null;
 
     function getFields() {
         return {
@@ -79,6 +80,70 @@
         }
     }
 
+    // =====================================================
+    // SUBMIT BUTTON VALIDATION
+    // =====================================================
+
+    function callbackDateMissing() {
+        var f = getFields();
+
+        var ovcCallbackSelected =
+            f.ovc &&
+            f.ovc.checked &&
+            f.ovcCallback &&
+            f.ovcCallback.checked;
+
+        var utilitiesCallbackSelected =
+            f.utilities &&
+            f.utilities.checked &&
+            !f.utilities.disabled &&
+            f.utilitiesCallback &&
+            f.utilitiesCallback.checked;
+
+        if (ovcCallbackSelected) {
+            if (!f.ovcDate ||
+                !String(f.ovcDate.value || "").trim()) {
+                return true;
+            }
+        }
+
+        if (utilitiesCallbackSelected) {
+            if (!f.utilitiesDate ||
+                !String(f.utilitiesDate.value || "").trim()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function updateSubmitButton() {
+        if (!submitButton || !submitButton.isConnected) {
+            submitButton = document.querySelector(
+                "input[type='submit'][value='Create a Lead']"
+            );
+        }
+
+        if (!submitButton) return;
+
+        var missingDate = callbackDateMissing();
+
+        submitButton.disabled = missingDate;
+        submitButton.style.opacity =
+            missingDate ? "0.5" : "1";
+
+        submitButton.style.cursor =
+            missingDate ? "not-allowed" : "pointer";
+
+        submitButton.title = missingDate
+            ? "Please select all required callback dates"
+            : "";
+    }
+
+    // =====================================================
+    // LIVE TRANSFER CONFIGURATION
+    // =====================================================
+
     function updateLiveTransferAvailability() {
         var f = getFields();
 
@@ -98,10 +163,10 @@
                f.utilities.checked &&
                !f.utilities.disabled);
 
-        // OVC Live Transfer is not available
-        // when OVC + Utilities are selected.
+        // Hide OVC Live Transfer for OVC + Utilities.
         var allowOvcLive =
-            ovcEnabled && !(ovcSelected && utilitiesSelected);
+            ovcEnabled &&
+            !(ovcSelected && utilitiesSelected);
 
         if (f.ovcLiveOption) {
             f.ovcLiveOption.style.display =
@@ -128,7 +193,9 @@
         if (f.utilitiesLive) {
             f.utilitiesLive.disabled = !utilitiesEnabled;
 
-            if (!utilitiesEnabled && f.utilitiesLive.checked) {
+            if (!utilitiesEnabled &&
+                f.utilitiesLive.checked) {
+
                 f.utilitiesLive.checked = false;
 
                 if (f.utilitiesCallback) {
@@ -136,19 +203,17 @@
                 }
             }
         }
-
-        console.log("CXone Live Transfer configuration:", {
-            ovcLiveTransfer: allowOvcLive,
-            utilLiveTransfer: utilitiesEnabled,
-            ovcUtilitiesCombination:
-                ovcSelected && utilitiesSelected
-        });
     }
+
+    // =====================================================
+    // DEFAULT DELIVERY SELECTION
+    // =====================================================
 
     function setDeliveryDefault(product) {
         var f = getFields();
 
         if (product === "ovc") {
+            // OVC defaults to Callback.
             if (f.ovcCallback) {
                 f.ovcCallback.checked = true;
             }
@@ -170,13 +235,17 @@
                 }
             } else if (utilitiesLiveAvailable) {
                 // Utilities only or OVC + Utilities:
-                // Utilities defaults to Live Transfer.
+                // Default to Live Transfer.
                 f.utilitiesLive.checked = true;
             } else if (f.utilitiesCallback) {
                 f.utilitiesCallback.checked = true;
             }
         }
     }
+
+    // =====================================================
+    // DELIVERY VISIBILITY
+    // =====================================================
 
     function refreshDelivery() {
         var f = getFields();
@@ -195,10 +264,9 @@
         var healthUtilities =
             healthSelected && utilitiesSelected;
 
-        // Refresh visibility whenever products change.
         updateLiveTransferAvailability();
 
-        // Health delivery
+        // Health
         if (f.healthDelivery) {
             f.healthDelivery.style.display =
                 healthUtilities ? "block" : "none";
@@ -208,7 +276,7 @@
             f.healthLive.checked = healthUtilities;
         }
 
-        // OVC delivery
+        // OVC
         if (f.ovcDelivery) {
             f.ovcDelivery.style.display =
                 ovcSelected ? "block" : "none";
@@ -237,7 +305,7 @@
             clearCallbackDate(f.ovcDate);
         }
 
-        // Utilities delivery
+        // Utilities
         if (f.utilitiesDelivery) {
             f.utilitiesDelivery.style.display =
                 utilitiesSelected ? "block" : "none";
@@ -267,16 +335,13 @@
             clearCallbackDate(f.utilitiesDate);
         }
 
-        console.log("CXone delivery selection:", {
-            healthLiveTransfer: healthUtilities,
-            ovcLiveTransfer: ovcSelected &&
-                !!(f.ovcLive && f.ovcLive.checked),
-            ovcCallback: showOvcCallback,
-            utilitiesLiveTransfer: utilitiesSelected &&
-                !!(f.utilitiesLive && f.utilitiesLive.checked),
-            utilitiesCallback: showUtilitiesCallback
-        });
+        // Revalidate submission after delivery changes.
+        updateSubmitButton();
     }
+
+    // =====================================================
+    // POSTCODE ELIGIBILITY
+    // =====================================================
 
     function updateUtilities() {
         var f = getFields();
@@ -342,6 +407,10 @@
             });
     }
 
+    // =====================================================
+    // PRODUCT SELECTION
+    // =====================================================
+
     function productChanged(changed) {
         var f = getFields();
 
@@ -359,9 +428,9 @@
             f.health.checked = false;
         }
 
-        // Update Live Transfer visibility first.
         updateLiveTransferAvailability();
 
+        // Apply defaults when products change.
         if (f.ovc && f.ovc.checked) {
             setDeliveryDefault("ovc");
         }
@@ -372,6 +441,10 @@
 
         refreshDelivery();
     }
+
+    // =====================================================
+    // INITIALIZATION
+    // =====================================================
 
     function initialise() {
         if (initialised) return;
@@ -384,7 +457,10 @@
             !f.state ||
             !f.postcode) {
 
-            console.warn("CXone: Waiting for form elements");
+            console.warn(
+                "CXone: Waiting for form elements"
+            );
+
             setTimeout(initialise, 500);
             return;
         }
@@ -406,6 +482,7 @@
             f.utilitiesCallback.checked = true;
         }
 
+        // Product events
         f.health.addEventListener("change", function () {
             productChanged(f.health);
         });
@@ -418,33 +495,115 @@
             productChanged(f.utilities);
         });
 
+        // Delivery events
         if (f.ovcLive) {
-            f.ovcLive.addEventListener("change", refreshDelivery);
+            f.ovcLive.addEventListener(
+                "change", refreshDelivery
+            );
         }
 
         if (f.ovcCallback) {
-            f.ovcCallback.addEventListener("change", refreshDelivery);
+            f.ovcCallback.addEventListener(
+                "change", refreshDelivery
+            );
         }
 
         if (f.utilitiesLive) {
-            f.utilitiesLive.addEventListener("change", refreshDelivery);
+            f.utilitiesLive.addEventListener(
+                "change", refreshDelivery
+            );
         }
 
         if (f.utilitiesCallback) {
-            f.utilitiesCallback.addEventListener("change", refreshDelivery);
+            f.utilitiesCallback.addEventListener(
+                "change", refreshDelivery
+            );
         }
 
-        f.state.addEventListener("input", updateUtilities);
-        f.state.addEventListener("change", updateUtilities);
-        f.postcode.addEventListener("input", updateUtilities);
-        f.postcode.addEventListener("change", updateUtilities);
+        // Callback date events
+        if (f.ovcDate) {
+            f.ovcDate.addEventListener(
+                "input", updateSubmitButton
+            );
 
+            f.ovcDate.addEventListener(
+                "change", updateSubmitButton
+            );
+        }
+
+        if (f.utilitiesDate) {
+            f.utilitiesDate.addEventListener(
+                "input", updateSubmitButton
+            );
+
+            f.utilitiesDate.addEventListener(
+                "change", updateSubmitButton
+            );
+        }
+
+        // Postcode events
+        f.state.addEventListener(
+            "input", updateUtilities
+        );
+
+        f.state.addEventListener(
+            "change", updateUtilities
+        );
+
+        f.postcode.addEventListener(
+            "input", updateUtilities
+        );
+
+        f.postcode.addEventListener(
+            "change", updateUtilities
+        );
+
+        // Initial form state
         refreshDelivery();
         updateUtilities();
         loadPostcodes();
 
+        // Locate the existing Create a Lead button.
+        submitButton = document.querySelector(
+            "input[type='submit'][value='Create a Lead']"
+        );
+
+        // Additional protection against submitting
+        // without required callback dates.
+        if (submitButton) {
+            var form = submitButton.closest("form");
+
+            if (form) {
+                form.addEventListener(
+                    "submit",
+                    function (event) {
+                        if (callbackDateMissing()) {
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                            updateSubmitButton();
+                        }
+                    },
+                    true
+                );
+            }
+        }
+
+        // Flatpickr may update the underlying input
+        // without firing a normal input event.
+        // Recheck the button periodically to detect
+        // date selection and date clearing reliably.
+        updateSubmitButton();
+
+        setInterval(function () {
+            if (!document.getElementById("product_health")) {
+                return;
+            }
+
+            updateSubmitButton();
+        }, 350);
+
         console.log(
-            "CXone configurable delivery form initialised"
+            "CXone configurable delivery and callback validation initialised"
         );
     }
 
